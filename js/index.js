@@ -24,11 +24,12 @@ const str_test = [
 ]
 
 class Dialog {
-    constructor(text="", delay=0, interval=0, persist=false) {
+    constructor(text="", delay=0, interval=0, persist=false, newline=true) {
         this.text = text;
         this.delay = delay;
         this.interval = interval;
         this.persist = persist;
+        this.newline = newline;
     }
 }
 
@@ -52,10 +53,10 @@ class QueueItem {
 }
 
 const dialog_test = [
-    new Dialog("Hello.", 100),
-    new Dialog("This is a test of the string print output.", 50, 1000),
-    new Dialog("I'm not sure how well this will work", 20, 500),
-    new Dialog("<span class=\"hint\">Let's find out.</span>", 200, 1500)
+    new Dialog("Hello.", 100, 0, true),
+    new Dialog(" This is a test of the string print output.", 50, 1000),
+    new Dialog("\nI'm not sure how well this will work", 20, 500),
+    new Dialog("\n<span class=\"hint\">Let's find out.</span>", 100, 500)
 ]
 const dialog_test2 = [
     new Dialog("Hello.", 0, 0),
@@ -194,41 +195,35 @@ function recursiveLine(diags, divs, row, charIndex, queueItem) {
 const displayPromise = (diags, divs, row, charIndex, queuePos) => {
     return new Promise((resolve, reject) => {
         const str = diags[row].text;
-        if (diags[row].interval > 0) {
-            const timeout = setTimeout(() => {
-                if (diags[row].delay > 0) {
-                    let timer = setInterval(()=>{
-                        let char = str[charIndex];
-                        if (char === "<") {
-                            charIndex = str.indexOf(">", charIndex); // skip to end of tag
-                        }
-                        divs[row].innerHTML = str.slice(0, charIndex+1);
-                        if (++charIndex >= str.length) {
-                            clearInterval(timer);
-                            resolve();
-                        }
-                    }, diags[row].delay);
-                    queue[queuePos]["timerArr"].push(timer);
-                    const e = document.createElement("span");
-                    e.className = "empty";
-                    output.appendChild(e);
-                    e.addEventListener("forceOutput", function cancel() {
-                        e.removeEventListener("forceOutput", cancel);
-                        output.removeChild(e);
-                        reject();
-                    });
-                }
-                else {
-                    divs[row].innerHTML = str;
-                    resolve();
-                }
-            }, diags[row].interval);
-            queue[queuePos]["timerArr"].push(timeout);
-        }
-        else {
-            divs[row].innerHTML = str;
-            resolve();
-        }
+        const timeout = setTimeout(() => {
+            if (diags[row].delay > 0) {
+                let timer = setInterval(()=>{
+                    let char = str[charIndex];
+                    if (char === "<") {
+                        charIndex = str.indexOf(">", charIndex); // skip to end of tag
+                    }
+                    divs[row].innerHTML = str.slice(0, charIndex+1);
+                    if (++charIndex >= str.length) {
+                        clearInterval(timer);
+                        resolve();
+                    }
+                }, diags[row].delay);
+                queue[queuePos]["timerArr"].push(timer);
+                const e = document.createElement("span");
+                e.className = "empty";
+                output.appendChild(e);
+                e.addEventListener("forceOutput", function cancel() {
+                    e.removeEventListener("forceOutput", cancel);
+                    output.removeChild(e);
+                    reject();
+                });
+            }
+            else {
+                divs[row].innerHTML = str;
+                resolve();
+            }
+        }, diags[row].interval);
+        queue[queuePos]["timerArr"].push(timeout);
     });
 };
 
