@@ -1,6 +1,5 @@
 const output = document.querySelector("#output")
 const input = document.querySelector("#cmd")
-let intervals = []
 let queue = []
 let commands = []
 let persistentDivs = []
