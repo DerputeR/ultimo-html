@@ -3,6 +3,7 @@ const input = document.querySelector("#cmd")
 let intervals = []
 let queue = []
 let commands = []
+let persistantDivs = []
 
 input.addEventListener("keypress", (e) => {
     if (e.keyCode == 13 || e.key == "Enter") {
@@ -21,10 +22,11 @@ const str_test = [
 ]
 
 class Dialog {
-    constructor(text="", delay=0, interval=0) {
+    constructor(text="", delay=0, interval=0, persist=false) {
         this.text = text;
         this.delay = delay;
         this.interval = interval;
+        this.persist = persist;
     }
 }
 
@@ -60,7 +62,7 @@ const dialog_test2 = [
     new Dialog("<b>Let's find out.</b>", 10, 100)
 ]
 
-function clearOutput() {
+function clearOutput(clearPersistant=false) {
     const outDivs = output.childNodes;
     for (let i = outDivs.length - 1; i >= 0; i--) {
         output.removeChild(outDivs[i])
@@ -70,18 +72,26 @@ function clearOutput() {
         clearInterval(intervals[i]);
         intervals.pop()
     }
+    if (clearPersistant) {
+        persistantDivs = [];
+    }
+    else{
+        persistantDivs.forEach(element => {
+            output.appendChild(element);
+        });
+    }
 }
 
 function start() {
-    clearOutput();
+    clearOutput(true);
     const dialog_start = [
-        new Dialog("ultimo\n\n\n\n\n", 100, 1000),
-        new Dialog(""),
-        new Dialog(""),
-        new Dialog(""),
-        new Dialog(""),
-        new Dialog(""),
-        new Dialog("<u>start</u> day", 100, 1000)
+        new Dialog("ultimo\n\n\n\n\n", 100, 1000, true),
+        new Dialog("", 0, 0, true),
+        new Dialog("", 0, 0, true),
+        new Dialog("", 0, 0, true),
+        new Dialog("", 0, 0, true),
+        new Dialog("", 0, 0, true),
+        new Dialog("<u>start</u> day", 100, 1000, true)
     ];
     
     sendOutput(dialog_start);
@@ -100,6 +110,9 @@ function sendOutput(dialogArr) {
         div = document.createElement("div");
         output.appendChild(div);
         divs.push(div);
+        if (dialogArr[i].persist) {
+            persistantDivs.push(div);
+        }
     }
     // typewriters(dialogArr, divs, 0);
     displayLines(dialogArr, divs);
@@ -116,35 +129,14 @@ function parseInput(inputStr) {
 }
 
 function echoInput(inputStr) {
+    clearOutput(false);
     const echo = [
-        new Dialog("<echo>> " + inputStr + "</echo>", 0, 0),
-        new Dialog("<err>command not found</err>", 0, 0)
+        new Dialog("<echo>> " + inputStr + "</echo>", 0, 0, false),
+        new Dialog("<err>command not found</err>", 0, 0, false)
     ]
     sendOutput(echo);
-    // forceOutQueue();
 }
 
-
-// adopted from https://stackoverflow.com/questions/29462305/how-to-create-a-typewriter-effect-in-javascript-that-will-take-into-account-html/29462670
-// function typewriter(delay, div, str) {
-//     let i = 0;
-//     let timer = setInterval(() => {
-//         const char = str[i];
-//         if (char === "<") {
-//             i = str.indexOf(">", i); // skip to end of tag
-//         }
-
-//         div.innerHTML = str.slice(0, i+1);
-
-//         if (++i >= str.length) {
-//             clearInterval(timer);
-//             console.log('done');
-//             const e = new CustomEvent('lineDone');
-//             output.dispatchEvent(e);
-//         }
-//     }, delay);
-//     intervals.push(timer);
-// }
 
 function forceOutQueue() {
     const event = new CustomEvent("forceOutput");
