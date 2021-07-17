@@ -3,13 +3,16 @@ const input = document.querySelector("#cmd")
 let intervals = []
 let queue = []
 let commands = []
-let persistantDivs = []
+let persistentDivs = []
 
 input.addEventListener("keypress", (e) => {
     if (e.keyCode == 13 || e.key == "Enter") {
         if (input.value.length > 0) {
             parseInput(input.value);
             input.value = "";
+        }
+        else {
+            forceOutQueue();
         }
     }
 });
@@ -62,24 +65,30 @@ const dialog_test2 = [
     new Dialog("<b>Let's find out.</b>", 10, 100)
 ]
 
-function clearOutput(clearPersistant=false) {
+function clearOutput(clearpersistent=false) {
     const outDivs = output.childNodes;
+    forceOutQueue();
     for (let i = outDivs.length - 1; i >= 0; i--) {
         output.removeChild(outDivs[i])
+        console.log()
     }
-
-    for (let i = intervals.length - 1; i >= 0; i--) {
-        clearInterval(intervals[i]);
-        intervals.pop()
-    }
-    if (clearPersistant) {
-        persistantDivs = [];
+    if (clearpersistent) {
+        persistentDivs = [];
     }
     else{
-        persistantDivs.forEach(element => {
+        persistentDivs.forEach(element => {
             output.appendChild(element);
         });
     }
+}
+
+function persistOutput() {
+    forceOutQueue();
+    persistentDivs = [];
+    const get = output.childNodes;
+    get.forEach(element => {
+        persistentDivs.push(element.cloneNode(true));
+    });
 }
 
 function start() {
@@ -111,7 +120,7 @@ function sendOutput(dialogArr) {
         output.appendChild(div);
         divs.push(div);
         if (dialogArr[i].persist) {
-            persistantDivs.push(div);
+            persistentDivs.push(div);
         }
     }
     // typewriters(dialogArr, divs, 0);
