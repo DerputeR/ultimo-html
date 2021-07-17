@@ -152,6 +152,7 @@ function forceOutQueue() {
     queue.forEach(item => {
         item["timerArr"].forEach(timer => {
             clearInterval(timer);
+            clearTimeout(timer);
         });
         for (let i = 0; i < item["diagArr"].length; i++) {
             item["divArr"][i].innerHTML = item["diagArr"][i].text;
@@ -160,49 +161,6 @@ function forceOutQueue() {
     queue = [];
 }
 
-function typewriters(diags, divs, r, q=-2) {
-    let c = 0;
-    let spot = intervals.length;
-    if (q == -2) {
-        q = findWithAttr(queue, "diagArg", diags);
-        if (q === -1) {
-            let item = new QueueItem(diags, divs, []);
-            q = queue.length;
-            queue.push(item);
-        }
-    }
-    let timer = setInterval(() => {
-        let spo = queue[q]["timerArr"].indexOf(timer);
-        let str = diags[r].text;
-        const char = str[c];
-        if (char === "<") {
-            c = str.indexOf(">", c); // skip to end of tag
-        }
-
-        divs[r].innerHTML = str.slice(0, c+1);
-
-        if (++c >= str.length) {
-            {
-                if (++r >= diags.length) { // When all lines are done
-                    clearInterval(timer);
-                    intervals.splice(spot, 1);
-                    queue.splice(q, 1);
-                }
-                else { // When current line is done
-                    clearInterval(timer);
-                    intervals.splice(spot, 1);
-                    queue[q]["timerArr"].splice(spo, 1);
-                    setTimeout(()=>{
-                        typewriters(diags, divs, r, q);
-                    }, diags[r].interval);
-                }
-            }
-        }
-    }, diags[r].delay);
-    intervals.push(timer);
-    queue[q]["timerArr"].push(timer);  
-    // console.log(queue);  
-}
 
 function displayLines(diags, divs) {
     queueItem = new QueueItem(diags, divs, []);
@@ -234,7 +192,7 @@ const displayPromise = (diags, divs, row, charIndex, queuePos) => {
     return new Promise((resolve, reject) => {
         const str = diags[row].text;
         if (diags[row].interval > 0) {
-            setTimeout(() => {
+            const timeout = setTimeout(() => {
                 if (diags[row].delay > 0) {
                     let timer = setInterval(()=>{
                         let char = str[charIndex];
@@ -261,6 +219,7 @@ const displayPromise = (diags, divs, row, charIndex, queuePos) => {
                     resolve();
                 }
             }, diags[row].interval);
+            queue[queuePos]["timerArr"].push(timeout);
         }
         else {
             divs[row].innerHTML = str;
