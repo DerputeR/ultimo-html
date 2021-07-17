@@ -4,7 +4,7 @@
     margin: 2px;
     padding: 0px;
     box-sizing: border-box;
-    font-family: 'Consolas', 'Inconsolata', monospace;
+    font-family: 'Inconsolata', 'Consolas', monospace;
     font-size: 16pt;
     background-color: black;
     color: white
@@ -14,7 +14,12 @@ main {
     height: 100vh;
     display: flex;
     flex-direction: column;
-    max-width: 40em;
+    /* max-width: 40em; */
+    
+}
+
+body {
+    overflow: hidden;
 }
 
 div#output{
@@ -43,16 +48,33 @@ input[type="text"] {
     outline: none;
 }
 
-empty {
+/* empty {
     display: none;
     width: 0px;
     height: 0px;
+} */
+
+span.empty {
+    display:none;
 }
 
-err {
+span.error {
+    color: red;
+}
+
+span.echo {
+    color: gray;
+}
+
+span.hint {
+    font-weight: bold;
+    color: yellow;
+}
+
+/* err {
     color: red;
 }
 
 echo {
     color: gray;
-}
+} */

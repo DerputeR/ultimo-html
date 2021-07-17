@@ -21,7 +21,7 @@ const str_test = [
     "Hello.",
     "This is a test of the string print output.",
     "I'm not sure how well this will work",
-    "<b>Let's find out.</b>"
+    "<span class=\"hint\">Let's find out.</span>"
 ]
 
 class Dialog {
@@ -56,13 +56,13 @@ const dialog_test = [
     new Dialog("Hello.", 100),
     new Dialog("This is a test of the string print output.", 50, 1000),
     new Dialog("I'm not sure how well this will work", 20, 500),
-    new Dialog("<b>Let's find out.</b>", 200, 1500)
+    new Dialog("<span class=\"hint\">Let's find out.</span>", 200, 1500)
 ]
 const dialog_test2 = [
     new Dialog("Hello.", 0, 0),
     new Dialog("This is a test of the string print output.", 0, 0),
     new Dialog("I'm not sure how well this will work", 0, 0),
-    new Dialog("<b>Let's find out.</b>", 10, 100)
+    new Dialog("<span class=\"hint\">Let's find out.</span>", 10, 100)
 ]
 
 function clearOutput(clearpersistent=false) {
@@ -100,7 +100,10 @@ function start() {
         new Dialog("", 0, 0, true),
         new Dialog("", 0, 0, true),
         new Dialog("", 0, 0, true),
-        new Dialog("<u>start</u> day", 100, 1000, true)
+        new Dialog("<span class=\"hint\">start</span> day", 100, 1000, true),
+        new Dialog("", 0, 0, true),
+        new Dialog("", 0, 0, true),
+        new Dialog("", 0, 0, true),
     ];
     
     sendOutput(dialog_start);
@@ -140,8 +143,8 @@ function parseInput(inputStr) {
 function echoInput(inputStr) {
     clearOutput(false);
     const echo = [
-        new Dialog("<echo>> " + inputStr + "</echo>", 0, 0, false),
-        new Dialog("<err>command not found</err>", 0, 0, false)
+        new Dialog("<span class=\"echo\">> " + inputStr + "</span>", 0, 0, false),
+        new Dialog("<span class=\"error\">command not found</span>", 0, 0, false)
     ]
     sendOutput(echo);
 }
@@ -207,7 +210,8 @@ const displayPromise = (diags, divs, row, charIndex, queuePos) => {
                         }
                     }, diags[row].delay);
                     queue[queuePos]["timerArr"].push(timer);
-                    const e = document.createElement("empty");
+                    const e = document.createElement("span");
+                    e.className = "empty";
                     output.appendChild(e);
                     e.addEventListener("forceOutput", function cancel() {
                         e.removeEventListener("forceOutput", cancel);
@@ -245,4 +249,11 @@ function findWithAttr(array, attr, value) {
     return -1;
 }
 
-start()
+
+document.addEventListener("keypress", ()=>{
+    input.focus();
+    output.scrollTop = output.scrollHeight;
+});
+
+
+start();
