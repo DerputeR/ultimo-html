@@ -1,6 +1,6 @@
 const output = document.querySelector("#output");
 const input = document.querySelector("#cmd");
-const version = "v0.3b";
+const version = "v0.3b_01";
 let queue = [];
 let commands = [];
 let persistentDivs = [];
@@ -43,8 +43,12 @@ class Command {
 /**
  * Global commands
  */
- const _globalCommands = [new Command("help", help), new Command("clear", () => {clearOutput()})]
- let globalCommands = _globalCommands.slice();
+const _globalCommands = [
+     new Command("help", help),
+     new Command("clear", () => {clearOutput()}),
+    //  new Command("restart", restart)
+];
+let globalCommands = _globalCommands.slice();
 
 class QueueItem {
     constructor(diagArr=[], divArr=[], timerArr=[]) {
@@ -261,6 +265,24 @@ function hints() {
     sendOutput(dialog_help);
     // persistOutput();
     globalCommands = _globalCommands.slice();
+}
+
+// todo: make it so that choosing "no" will restore the scene you were just on
+// ! will bug you out if you try to restart during a countdown sequence
+function restart(last_scene) {
+    const dia = [
+        new Dialog("are you sure you want to restart? (Y/N)", 50, 0, false),
+    ];
+    globalCommands = _globalCommands.splice();
+    const prompt = [
+        new Command("Y", ()=>{start()}),
+        new Command("N", ()=>{
+            clearOutput();
+            globalCommands = _globalCommands;
+        })
+    ];
+    globalCommands.push(...prompt)
+    sendOutput(dia);
 }
 
 function start() {
