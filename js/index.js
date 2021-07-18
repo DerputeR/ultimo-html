@@ -3,6 +3,7 @@ const input = document.querySelector("#cmd");
 let queue = [];
 let commands = [];
 let persistentDivs = [];
+let gameTimer = -10;
 
 input.addEventListener("keypress", (e) => {
     if (e.keyCode == 13 || e.key == "Enter") {
@@ -33,6 +34,7 @@ class Command {
         this.args = arguments;
     }
     execute() {
+        clearTimeout(gameTimer);
         this.func.apply(this, this.args);
     }
 }
@@ -312,7 +314,7 @@ function story_day1_a() {
         new Command("work", story_day1_work),
     ];
 
-    setTimeout(story_day1_work, 30000); // 30 seconds before you go default path
+    gameTimer = setTimeout(story_day1_work, 30000); // 30 seconds before you go default path
 }
 
 function story_day1_murmurs() {
@@ -331,7 +333,7 @@ function story_day1_murmurs() {
         new Command("work", story_day1_work),
     ];
 
-    setTimeout(story_day1_work, 30000); // 30 seconds before you go default path
+    gameTimer = setTimeout(story_day1_work, 30000); // 30 seconds before you go default path
 }
 
 function story_day1_something() {
@@ -345,7 +347,7 @@ function story_day1_something() {
     ];
     sendOutput(dia);
     commands = [];
-    setTimeout(story_day1_somethingb, 12000);
+    gameTimer = setTimeout(story_day1_somethingb, 12000);
 }
 
 function story_day1_somethingb() {
@@ -419,7 +421,7 @@ function story_day2a() {
         new Command("extra hours", story_day2a_work),
         new Command("visit", story_day2a_visit)
     ];
-    setTimeout(story_day2a_work, 30000); // 30 seconds before you go default path
+    gameTimer = setTimeout(story_day2a_work, 30000); // 30 seconds before you go default path
 }
 
 function story_day2a_work() {
@@ -440,7 +442,7 @@ function story_day2a_work() {
             new Dialog("you recognize it belonging to your kind elderly supervisor, <span class='hint'>Mr. Brevi</span>", 30, 1000, true)
         ];
         sendOutput(dia);
-        setTimeout(story_day2a_brevi1, 6000);
+        gameTimer = setTimeout(story_day2a_brevi1, 6000);
     }, 5000);
 }
 
@@ -451,11 +453,13 @@ function story_day2a_brevi1() {
         new commands("walk", story_day2a_brevi1_walk),
     ];
     let dia = [
-        new Dialog("you drive to work.", 15, 500, true),
-        new Dialog("the streets are strangely empty.", 30, 2000, true),
+        new Dialog("you enter the office.", 15, 500, true),
+        new Dialog("all the lights are off except for <span class='hint'>Mr. Brevi</span>'s.", 30, 2000, true),
+        new Dialog("", 0, 1000, true),
+        new Dialog("you <span class='hint'>walk</span> toward your cubicle", 15, 1000, true)
     ];
     sendOutput(dia);
-    setTimeout(story_day2a_brevi1_walk, 30000);
+    gameTimer = setTimeout(story_day2a_brevi1_walk, 30000);
 }
 
 function story_day2a_brevi1_walk() {
