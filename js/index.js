@@ -29,14 +29,68 @@ class Dialog {
 }
 
 class Command {
-    constructor(cmd, func) {
-        this.cmd = cmd.trim().toLowerCase();
+    /**
+     * Creates a command object
+     * @param {String} cmd                  String of the command that will be input. DON'T CAPITALIZE OR INCLUDE EXTRA WHITESPACE
+     * @param {function} func               Reference to a function that will be called on successful execution of the command
+     * @param {String Array} validArgs      List of valid second words that can follow the first command (action) word.
+     *                                      If empty, the command does not require a second word as a target.
+     *                                      DO NOT CAPITALIZE OR INCLUDE EXTRA WHITESPACE
+     * @param {int} requireArg              -1 = arg not needed, but if given, ignores validArgs
+     *                                      0 = arg not needed, but if given, MUST be one in validArgs
+     *                                      1 = arg is needed, MUST be one in validArgs
+     *                                      2 = arg is needed, but ignores validArgs
+     */
+    constructor(cmd, func, validArgs=[], requireArg=1) {
+        this.cmd = cmd;
         this.func = func;
-        this.args = arguments;
+        this.validArgs = validArgs;
+        this.requireArg = requireArg;
+        this.extraArgs = arguments;
     }
-    execute() {
-        clearTimeout(gameTimer);
-        this.func.apply(this, this.args);
+    execute(arg) {
+        console.log(this.cmd);
+        console.log(arg);
+        console.log(this.validArgs);
+        console.log(this.func);
+        if (this.validArgs.length > 0 && arg != undefined && arg.length > 0) {
+            const argID = this.validArgs.indexOf(arg.trim().toLowerCase()); 
+            if (argID > -1) {
+                console.warn("execute state: with argument");
+                this.func.apply(this, arg, this.extraArgs);
+                // return true; // command has an arg when it should
+            }
+            else {
+                console.warn("no execution: bad argument");
+                sendOutput([new Dialog(`<span class='error'>error: invalid argument. valid options: ${this.validArgs}</span>`, 0, 0, false)]);
+                // return false; // command has a bad arg
+            } 
+        }
+        else if (this.validArgs.length > 0 && !this.requireArg && arg != undefined && arg.length > 0) {
+            console.warn("execute state: optional argument");
+            this.func.apply(this, arg, this.extraArgs);
+            // return true; // command has an optional arg
+        }
+        else if (this.validArgs.length > 0 && !this.requireArg && (arg == undefined || arg.length == 0)) {
+            console.warn("execute state: no optional argument");
+            this.func.apply(this, "", this.extraArgs);
+            // return true; // command doesn't have an optional arg
+        }
+        else if (this.validArgs.length > 0 && this.requireArg && (arg == undefined || arg.length == 0)) {
+            console.warn("no execution: missing argument");
+            sendOutput([new Dialog(`<span class='error'>command '${this.cmd}' is missing an argument. valid options: ${this.validArgs}</span>`, 0, 0, false)]);
+            // return false; // command doesn't have an arg when it must
+        }
+        else if (this.validArgs.length === 0 && (arg != undefined && arg.length > 0)) {
+            console.warn("no execution: extra argument");
+            sendOutput([new Dialog(`<span class='error'>command '${this.cmd}' does not call for any arguments.</span>`, 0, 0, false)]);
+            // return false; // command has arg when it shouldn't
+        }
+        else {
+            console.warn("execute state: no required argument");
+            this.func.apply(this, this.extraArgs);
+            // return true; // command doesn't have an arg and doesn't need one
+        }
     }
 }
 
@@ -117,27 +171,33 @@ function sendOutput(dialogArr) {
 }
 
 function parseInput(inputStr) {
-    const cmdID = findWithAttr(commands, "cmd", inputStr.toLowerCase().trim());
-    const gCmdID = findWithAttr(globalCommands, "cmd", inputStr.toLowerCase().trim());
+    let inputs = inputStr.toLowerCase().trim().split(/\s+/);
+    console.log(inputs);
+    let cmdID = findWithAttr(commands, "cmd", inputs[0]);
+    let gCmdID = findWithAttr(globalCommands, "cmd", inputs[0]);
+    console.log(cmdID);
+    console.log(gCmdID);
     if (cmdID > -1) {
-        commands[cmdID].execute();
-        globalCommands = _globalCommands.slice(); // reset any weird changes
+        echoInput(inputs, false);
+        commands[cmdID].execute(inputs.slice(1, inputs.length));
+        // globalCommands = _globalCommands.slice(); // reset any weird changes
     }
     else if (gCmdID > -1) {
-        echoInput(inputStr, false);
-        globalCommands[gCmdID].execute();
+        echoInput(inputs, false);
+        globalCommands[gCmdID].execute(inputs.slice(1, inputs.length));
     }
     else {
-        echoInput(inputStr);
+        echoInput(inputs, true);
     }
 }
 
-function echoInput(inputStr, err=true) {
+function echoInput(inputs, err=true) {
+    const inputStr = inputs.join(" ");
     // clearOutput(false);
     const echo = [
         new Dialog("<span class=\"echo\">> " + inputStr + "</span>", 0, 0, false)
     ]
-    if (err) echo.push(new Dialog("<span class=\"error\">command not found</span>", 0, 0, false));
+    if (err) echo.push(new Dialog(`<span class='error'>command not found: '${inputs[0]}'</span>`, 0, 0, false));
     sendOutput(echo);
 }
 
@@ -235,6 +295,20 @@ function findWithAttr(array, attr, value) {
     return -1;
 }
 
+function findHasAttr(array, attr, value) {
+    if (array.length < 1) return -1;
+    for (let i = 0; i < array.length; i++) {
+        try {
+            if (array[i][attr].indexOf(value) > -1) {
+                return i;
+            }
+        }
+        catch { // if doesn't exist
+            return -1;
+        }
+    }
+}
+
 
 document.addEventListener("keypress", ()=>{
     input.focus();
@@ -249,7 +323,7 @@ document.addEventListener("keypress", ()=>{
  function help(loop=false) {
     // persistOutput();
     const dialog_help = [
-        new Dialog("look out for <span class='hint'>hints</span>", 100, 0, false)
+        new Dialog("look out for <span class='cmd'>hints</span>", 100, 0, false)
     ]
     sendOutput(dialog_help);
     // persistOutput();
@@ -260,7 +334,7 @@ document.addEventListener("keypress", ()=>{
 function hints() {
     // persistOutput();
     const dialog_help = [
-        new Dialog("they may be of <span class='hint'>help</span>", 100, 0, false)
+        new Dialog("they may be of <span class='cmd'>help</span>", 100, 0, false)
     ]
     sendOutput(dialog_help);
     // persistOutput();
@@ -294,10 +368,10 @@ function start() {
         new Dialog("", 0, 0, true),
         new Dialog("", 0, 0, true),
         new Dialog("", 0, 0, true),
-        new Dialog("<span class=\"hint\">start</span> day", 100, 1000, true),
+        new Dialog("<span class='cmd'>start</span> day", 100, 1000, true),
         new Dialog("", 0, 0, true),
         new Dialog("", 0, 0, true),
-        new Dialog("<span class='echo'>hint: try typing <span class='hint'>help</span> and hitting enter</span>", 50, 3000, true),
+        new Dialog("<span class='hint'>hint: try typing <span class='cmd'>help</span> and hitting enter</span>", 50, 3000, true),
     ];
     
     sendOutput(dialog_start);
@@ -348,12 +422,12 @@ function story_day1_a() {
 function story_day1_murmurs() {
     clearOutput(true);
     const dia = [
-        new Dialog("you overhear them saying <span class='hint'>something</span> about the moon", 15, 500, true),
+        new Dialog("you overhear them saying <span class='cmd'>something</span> about the moon", 15, 500, true),
         new Dialog("you saw on the weather yesterday that it was going to be a full moon", 15, 1000, true),
         new Dialog(" ", 10, 1500, true),
         new Dialog("it doesn't really matter", 10, 0, true),
         new Dialog("", 100, 1000, true),
-        new Dialog("you've got some <span class='hint'>work</span> to finish", 15, 0, true)
+        new Dialog("you've got some <span class='cmd'>work</span> to finish", 15, 0, true)
     ];
     sendOutput(dia);
     commands = [
@@ -441,8 +515,8 @@ function story_day2a() {
         new Dialog("it seems a bit overcast today.", 30, 1000, true),
         new Dialog("you don't hear any birds.", 10, 1000, true),
         new Dialog("", 15, 0, true),
-        new Dialog("you think about putting in some <span class='hint'>extra hours</span> today.", 15, 2000, true),
-        new Dialog("you might give your parents a surprise <span class='hint'>visit</span>", 15, 1000, true)
+        new Dialog("you think about putting in some <span class='cmd'>extra hours</span> today.", 15, 2000, true),
+        new Dialog("you might give your parents a surprise <span class='cmd'>visit</span>", 15, 1000, true)
     ];
     sendOutput(dia);
     commands = [
@@ -469,7 +543,7 @@ function story_day2a_work() {
             new Dialog("you arrive at the office.", 15, 500, true),
             new Dialog("there's only one car.", 30, 1000, true),
             new Dialog("", 30, 0, true),
-            new Dialog("you recognize it belonging to your kind elderly supervisor, <span class='hint'>Mr. Brevi</span>", 30, 1000, true)
+            new Dialog("you recognize it belonging to your kind elderly supervisor, <span class='cmd'>Mr. Brevi</span>", 30, 1000, true)
         ];
         sendOutput(dia);
         gameTimer = setTimeout(story_day2a_brevi1, 10000);
@@ -484,9 +558,9 @@ function story_day2a_brevi1() {
     ];
     let dia = [
         new Dialog("you enter the office.", 15, 500, true),
-        new Dialog("all the lights are off except for <span class='hint'>Mr. Brevi</span>'s.", 30, 2000, true),
+        new Dialog("all the lights are off except for <span class='cmd'>Mr. Brevi</span>'s.", 30, 2000, true),
         new Dialog("", 0, 1000, true),
-        new Dialog("you <span class='hint'>walk</span> toward your cubicle", 15, 1000, true)
+        new Dialog("you <span class='cmd'>walk</span> toward your cubicle", 15, 1000, true)
     ];
     sendOutput(dia);
     gameTimer = setTimeout(story_day2a_brevi1_walk, 30000);

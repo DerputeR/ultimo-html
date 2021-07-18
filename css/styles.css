@@ -67,8 +67,14 @@ span.echo {
 }
 
 span.hint {
+    font-style: italic;
+    color: gray;
+}
+
+span.cmd {
     font-weight: bold;
-    color: yellow;
+    font-style: normal;
+    color: magenta;
 }
 
 /* err {
