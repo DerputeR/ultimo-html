@@ -1,10 +1,71 @@
 const output = document.querySelector("#output");
 const input = document.querySelector("#cmd");
+const timerDiv = document.querySelector("#timer");
 const version = "v0.3b_01";
 let queue = [];
 let commands = [];
 let persistentDivs = [];
 let gameTimer = -10;
+let gameTimerID = -10;
+let gameTimerTime = 0;
+let gameTimerActive = false;
+let gameTimerPaused = false;
+
+function startGameTimer(timeAmt=10000) {
+    if (!gameTimerActive || gameTimerPaused) {
+        gameTimerTime = timeAmt;
+        gameTimerID = setInterval(()=>{
+            gameTimerTime -= 250;
+            if (gameTimerTime <= 0) {
+                stopGameTimer();
+            }
+            else {
+                updateGameTimerDiv();
+            }
+        }, 250);
+        gameTimerActive = true;
+        gameTimerPaused = false;
+    }
+}
+
+function stopGameTimer() {
+    if (gameTimerActive) {
+        clearInterval(gameTimerID);
+        gameTimerTime = 0;
+        updateGameTimerDiv();
+        const e = new CustomEvent("gameTimerStopped");
+        document.dispatchEvent(e);
+        gameTimerActive = false;
+        gameTimerPaused = false;
+    }
+} 
+
+function pauseGameTimer() {
+    if (gameTimerActive && !gameTimerPaused) {
+        clearInterval(gameTimerID);
+        updateGameTimerDiv();
+        gameTimerPaused = true;
+    }
+}
+
+function resumeGameTimer() {
+    if (gameTimerActive && gameTimerPaused) {
+        startGameTimer(gameTimerTime);
+    }
+}
+
+function togglePauseGameTimer() {
+    if (gameTimerActive && !gameTimerPaused) {
+        pauseGameTimer();
+    }
+    else if (gameTimerActive && gameTimerPaused) {
+        resumeGameTimer();
+    }
+}
+
+function updateGameTimerDiv() {
+    timerDiv.innerHTML = "* ".repeat((gameTimerTime / 1000));
+}
 
 input.addEventListener("keypress", (e) => {
     if (e.keyCode == 13 || e.key == "Enter") {
@@ -80,17 +141,17 @@ class Command {
                     console.log("executed case 0, with arg");
                 }
                 else {
-                    sendOutput([new Dialog(`<span class='error'>invalid argument. argument for '${this.cmd}' is optional, but must be one of the following: [${this.validArgs}]</span>`)]);
+                    sendOutput([new Dialog(`<span class='error'>invalid argument. argument for '${this.cmd}' is optional, but if provided, must be one of the following:\n[${this.validArgs.join(", ")}]</span>`)]);
                     console.warn("failed to execute case 0");
                 }
                 break;
             case 1:
                 if (arg.length === 0) {
-                    sendOutput([new Dialog(`<span class='error'>'${this.cmd}' is missing an argument. valid options: [${this.validArgs}]</span>`, 0, 0, false)]);
+                    sendOutput([new Dialog(`<span class='error'>'${this.cmd}' requires an argument. valid options:\n[${this.validArgs.join(", ")}]</span>`, 0, 0, false)]);
                     console.warn("failed to execute case 1, missing arg");
                 }
                 else if (argID === -1) {
-                    sendOutput([new Dialog(`<span class='error'>invalid argument. valid options: [${this.validArgs}]</span></span>`, 0, 0, false)]);
+                    sendOutput([new Dialog(`<span class='error'>invalid argument. valid options:\n[${this.validArgs.join(", ")}]</span></span>`, 0, 0, false)]);
                     console.warn("failed to execute case 1, bad arg");
                 }
                 else  {
@@ -100,7 +161,7 @@ class Command {
                 break;
             case 2:
                 if (arg.length === 0) {
-                    sendOutput([new Dialog(`<span class='error'>'${this.cmd}' is missing an argument. valid options: any</span>`, 0, 0, false)]);
+                    sendOutput([new Dialog(`<span class='error'>'${this.cmd}' requires an argument. valid options:\nany</span>`, 0, 0, false)]);
                     console.warn("failed to execute case 2, missing arg");
                 }
                 else {
@@ -118,6 +179,35 @@ class Command {
 const _globalCommands = [
      new Command("help", help),
      new Command("clear", () => {clearOutput()}),
+     new Command("debug", debug, [], -1),
+     new Command("list", (cmdType)=>{
+        let locals = [];
+        let globals  = [];
+        let all = [];
+        globalCommands.forEach((cmd) => {
+            globals.push(cmd.cmd);
+        });
+        commands.forEach((cmd) => {
+            locals.push(cmd.cmd);
+        });
+        all = globals.concat(locals);
+
+        switch (cmdType) {
+            case "":
+                sendOutput([new Dialog(`all commands: ${all.join(", ")}`, 0, 0, false)]);
+                break;
+            case "all":
+                sendOutput([new Dialog(`all commands: ${all.join(", ")}`, 0, 0, false)]);
+                break;
+            case "local":
+                sendOutput([new Dialog(`local commands: ${locals.join(", ")}`, 0, 0, false)]);
+                break;
+            case "global":
+                sendOutput([new Dialog(`global commands: ${globals.join(", ")}`, 0, 0, false)]);
+                break;
+        }
+
+     }, ["all", "local", "global"], 0)
     //  new Command("restart", restart)
 ];
 let globalCommands = _globalCommands.slice();
@@ -169,7 +259,13 @@ function persistOutput() {
     });
 }
 
-function sendOutput(dialogArr) {
+/**
+ * Print line(s) of dialogue to the "terminal"
+ * @param {Dialog Array} dialogArr      Array of dialog objects    
+ * @param {boolean} triggerGameTimer    Whether or not the end of the queue will trigger the game timer
+ * @param {number} timer                Game timer count in milliseconds
+ */
+function sendOutput(dialogArr, triggerGameTimer=false, timer=10000) {
     if (queue.length > 0) {
         forceOutQueue();
     }
@@ -183,7 +279,7 @@ function sendOutput(dialogArr) {
         }
     }
     // typewriters(dialogArr, divs, 0);
-    displayLines(dialogArr, divs);
+    displayLines(dialogArr, divs, triggerGameTimer, timer);
 
     output.scrollTop = output.scrollHeight;
 }
@@ -236,13 +332,13 @@ function forceOutQueue() {
 }
 
 
-function displayLines(diags, divs) {
+function displayLines(diags, divs, triggerGameTimer, timer) {
     queueItem = new QueueItem(diags, divs, []);
     queue.push(queueItem);
-    recursiveLine(diags, divs, 0, 0, queueItem);
+    recursiveLine(diags, divs, 0, 0, queueItem, triggerGameTimer, timer);
 }
 
-function recursiveLine(diags, divs, row, charIndex, queueItem) {
+function recursiveLine(diags, divs, row, charIndex, queueItem, triggerGameTimer, timer) {
     let queuePos = queue.indexOf(queueItem);
     let p = displayPromise(diags, divs, row, charIndex, queuePos);
     console.log(p);
@@ -250,15 +346,23 @@ function recursiveLine(diags, divs, row, charIndex, queueItem) {
         charIndex = 0;
         ++row;
         if (row < diags.length) {
-            recursiveLine(diags, divs, row, charIndex, queueItem);
+            recursiveLine(diags, divs, row, charIndex, queueItem, triggerGameTimer, timer);
         }
         else {
             console.log("finished item");
             queuePos = queue.indexOf(queueItem); // Update in case indices changed from prior removal
             queue.splice(queuePos, 1);
+            if (triggerGameTimer) {
+                // TODO: trigger game timer here
+                startGameTimer(timer);
+            }
         }
     }).catch(()=>{
         console.log("forcing output");
+        if (triggerGameTimer) {
+            // TODO: trigger game timer here
+            startGameTimer(timer);
+        }
     });
 }
 
@@ -334,11 +438,36 @@ document.addEventListener("keypress", ()=>{
 });
 
 
+
+
+
 /**
  * Story and commands
  */
 
- function help(loop=false) {
+function debug(...args) {
+    stopGameTimer();
+    clearOutput(true);
+    try {
+        const index = parseInt(args[0]);
+        gameScenes[index].apply(null);
+    }
+    catch {
+        let sceneList = [];
+        gameScenes.forEach((func)=>{
+            sceneList.push(func.name);
+        });
+        const debugDiag = [
+            new Dialog("To jump to a scene, type 'debug' followed by the name from this list:", 0, 0, true),
+            new Dialog(sceneList.join("\n"), 0, 0, true)
+        ];
+        sendOutput(debugDiag);
+    }    
+}
+
+
+
+function help(loop=false) {
     // persistOutput();
     const dialog_help = [
         new Dialog("look out for <span class='cmd'>hints</span>", 100, 0, false)
@@ -380,7 +509,7 @@ function restart(last_scene) {
 function start() {
     clearOutput(true);
     const dialog_start = [
-        new Dialog("ultimo\n\n\n\n\n", 100, 1000, true),
+        new Dialog("ultimo", 100, 1000, true),
         new Dialog("", 0, 0, true),
         new Dialog("", 0, 0, true),
         new Dialog("", 0, 0, true),
@@ -394,7 +523,7 @@ function start() {
     
     sendOutput(dialog_start);
     commands = [
-        new Command("start", story_day1),
+        new Command("start", story_day1, ["day", "game"], 0),
         new Command("version", ()=>{
             sendOutput([new Dialog(version, 100, 0, true)]);
         })
@@ -423,10 +552,10 @@ function story_day1_a() {
     const dia = [
         new Dialog("you've got a busy day today", 15, 500, true),
         new Dialog("you arrived early at the office", 15, 1000, true),
-        new Dialog("you've been hearing <span class='hint'>murmurs</span>", 15, 1500, true),
+        new Dialog("you've been hearing <span class='cmd'>murmurs</span>", 15, 1500, true),
         new Dialog("you're not sure what they're saying", 15, 1500, true),
         new Dialog("", 100, 1000, true),
-        new Dialog("you've got <span class='hint'>work</span> to do before going home tonight", 15, 1000, true)
+        new Dialog("you've got <span class='cmd'>work</span> to do before going home tonight", 15, 1000, true)
     ];
     sendOutput(dia);
     commands = [
@@ -625,5 +754,13 @@ function story_day2b() {
 }
 
 
+const gameScenes = 
+[
+    start, 
+    story_day1, story_day1_a, story_day1_murmurs, story_day1_something, story_day1_somethingb, story_day1_work, 
+    story_day2, 
+    story_day2a, story_day2a_brevi1, story_day2a_brevi1_walk, story_day2a_brevi2, story_day2a_visit, 
+    story_day2b
+]
 
 start();

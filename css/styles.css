@@ -6,11 +6,11 @@
     box-sizing: border-box;
     font-family: 'Inconsolata', 'Consolas', monospace;
     font-size: 16pt;
-    background-color: black;
     color: white
 }
 
 main {
+    background-color: black;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -19,6 +19,7 @@ main {
 }
 
 body {
+    background-color: black;
     overflow: hidden;
 }
 
@@ -30,9 +31,17 @@ div#output{
     /* white-space: pre-wrap; */
 }
 
+div#timer {
+    /* position: absolute; */
+}
+
 div {
     /* white-space: pre-wrap; */
     min-height: 1em;
+}
+
+div#output > div {
+    white-space: pre-wrap;
 }
 
 label {
@@ -42,6 +51,7 @@ label {
 }
 
 input[type="text"] {
+    background-color: black;
     margin-left: 1ch;
     width: 100%;
     border: none;
