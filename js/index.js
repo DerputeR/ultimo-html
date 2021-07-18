@@ -297,7 +297,7 @@ function start() {
         new Dialog("<span class=\"hint\">start</span> day", 100, 1000, true),
         new Dialog("", 0, 0, true),
         new Dialog("", 0, 0, true),
-        new Dialog("", 0, 0, true),
+        new Dialog("<span class='echo'>hint: try typing <span class='hint'>help</span> and hitting enter</span>", 50, 3000, true),
     ];
     
     sendOutput(dialog_start);
