@@ -1,5 +1,6 @@
 const output = document.querySelector("#output");
 const input = document.querySelector("#cmd");
+const version = "v0.3b";
 let queue = [];
 let commands = [];
 let persistentDivs = [];
@@ -42,7 +43,7 @@ class Command {
 /**
  * Global commands
  */
- const _globalCommands = [new Command("help", help)]
+ const _globalCommands = [new Command("help", help), new Command("clear", () => {clearOutput()})]
  let globalCommands = _globalCommands.slice();
 
 class QueueItem {
@@ -119,6 +120,7 @@ function parseInput(inputStr) {
         globalCommands = _globalCommands.slice(); // reset any weird changes
     }
     else if (gCmdID > -1) {
+        echoInput(inputStr, false);
         globalCommands[gCmdID].execute();
     }
     else {
@@ -126,12 +128,12 @@ function parseInput(inputStr) {
     }
 }
 
-function echoInput(inputStr) {
+function echoInput(inputStr, err=true) {
     // clearOutput(false);
     const echo = [
-        new Dialog("<span class=\"echo\">> " + inputStr + "</span>", 0, 0, false),
-        new Dialog("<span class=\"error\">command not found</span>", 0, 0, false)
+        new Dialog("<span class=\"echo\">> " + inputStr + "</span>", 0, 0, false)
     ]
+    if (err) echo.push(new Dialog("<span class=\"error\">command not found</span>", 0, 0, false));
     sendOutput(echo);
 }
 
@@ -241,17 +243,18 @@ document.addEventListener("keypress", ()=>{
  */
 
  function help(loop=false) {
-    persistOutput();
+    // persistOutput();
     const dialog_help = [
         new Dialog("look out for <span class='hint'>hints</span>", 100, 0, false)
     ]
     sendOutput(dialog_help);
     // persistOutput();
-    globalCommands = [new Command("hints", hints)];
+    globalCommands = _globalCommands.slice();
+    globalCommands.push(new Command("hints", hints));
 }
 
 function hints() {
-    persistOutput();
+    // persistOutput();
     const dialog_help = [
         new Dialog("they may be of <span class='hint'>help</span>", 100, 0, false)
     ]
@@ -277,7 +280,10 @@ function start() {
     
     sendOutput(dialog_start);
     commands = [
-        new Command("start", story_day1)
+        new Command("start", story_day1),
+        new Command("version", ()=>{
+            sendOutput([new Dialog(version, 100, 0, true)]);
+        })
     ];
 }
 
@@ -288,7 +294,7 @@ function story_day1() {
     let i = 0;
     const inter = setInterval(()=>{
         clearOutput(true);
-        sendOutput([new Dialog(clock[i])]);
+        sendOutput([new Dialog(clock[i], 0, 0, true)]);
         ++i;
         if (i >= clock.length) {
             clearOutput(true);
@@ -391,7 +397,7 @@ function story_day2(path) {
     let i = 0;
     const inter = setInterval(()=>{
         clearOutput(true);
-        sendOutput([new Dialog(clock[i])]);
+        sendOutput([new Dialog(clock[i], 0, 0, true)]);
         ++i;
         if (i >= clock.length) {
             clearOutput(true);
