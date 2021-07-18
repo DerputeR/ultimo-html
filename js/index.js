@@ -36,60 +36,78 @@ class Command {
      * @param {String Array} validArgs      List of valid second words that can follow the first command (action) word.
      *                                      If empty, the command does not require a second word as a target.
      *                                      DO NOT CAPITALIZE OR INCLUDE EXTRA WHITESPACE
-     * @param {int} requireArg              -1 = arg not needed, but if given, ignores validArgs
+     * @param {int} requireArg              -2 = arg not needed, MUST NOT be given
+     *                                      -1 = arg not needed, but if given, ignores validArgs
      *                                      0 = arg not needed, but if given, MUST be one in validArgs
      *                                      1 = arg is needed, MUST be one in validArgs
      *                                      2 = arg is needed, but ignores validArgs
+     * @param {int} ...args                 Optional arguments passed to func. DO NOT PUT INTO AN ARRAY
      */
-    constructor(cmd, func, validArgs=[], requireArg=1) {
+    constructor(cmd, func, validArgs=[], requireArg=-2, ...args) {
         this.cmd = cmd;
         this.func = func;
         this.validArgs = validArgs;
         this.requireArg = requireArg;
-        this.extraArgs = arguments;
+        this.extraArgs = args;
     }
-    execute(arg) {
-        console.log(this.cmd);
+    execute(arg="") {
         console.log(arg);
-        console.log(this.validArgs);
-        console.log(this.func);
-        if (this.validArgs.length > 0 && arg != undefined && arg.length > 0) {
-            const argID = this.validArgs.indexOf(arg.trim().toLowerCase()); 
-            if (argID > -1) {
-                console.warn("execute state: with argument");
-                this.func.apply(this, arg, this.extraArgs);
-                // return true; // command has an arg when it should
-            }
-            else {
-                console.warn("no execution: bad argument");
-                sendOutput([new Dialog(`<span class='error'>error: invalid argument. valid options: ${this.validArgs}</span>`, 0, 0, false)]);
-                // return false; // command has a bad arg
-            } 
-        }
-        else if (this.validArgs.length > 0 && !this.requireArg && arg != undefined && arg.length > 0) {
-            console.warn("execute state: optional argument");
-            this.func.apply(this, arg, this.extraArgs);
-            // return true; // command has an optional arg
-        }
-        else if (this.validArgs.length > 0 && !this.requireArg && (arg == undefined || arg.length == 0)) {
-            console.warn("execute state: no optional argument");
-            this.func.apply(this, "", this.extraArgs);
-            // return true; // command doesn't have an optional arg
-        }
-        else if (this.validArgs.length > 0 && this.requireArg && (arg == undefined || arg.length == 0)) {
-            console.warn("no execution: missing argument");
-            sendOutput([new Dialog(`<span class='error'>command '${this.cmd}' is missing an argument. valid options: ${this.validArgs}</span>`, 0, 0, false)]);
-            // return false; // command doesn't have an arg when it must
-        }
-        else if (this.validArgs.length === 0 && (arg != undefined && arg.length > 0)) {
-            console.warn("no execution: extra argument");
-            sendOutput([new Dialog(`<span class='error'>command '${this.cmd}' does not call for any arguments.</span>`, 0, 0, false)]);
-            // return false; // command has arg when it shouldn't
-        }
-        else {
-            console.warn("execute state: no required argument");
-            this.func.apply(this, this.extraArgs);
-            // return true; // command doesn't have an arg and doesn't need one
+        if (arg == undefined) arg = "";
+        const argID = this.validArgs.indexOf(arg.trim().toLowerCase());
+        switch (this.requireArg) {
+            case -2:
+                if (arg.length > 0) {
+                    sendOutput([new Dialog(`<span class='error'>'${this.cmd}' does not take any arguments</span>`)]);
+                    console.warn("failed to execute case -2");
+                }
+                else {
+                    console.log(this.extraArgs);
+                    this.func.apply(this, [arg].concat(this.extraArgs));
+                    console.log("executed case -2");
+                }
+                break;
+            case -1:
+                this.func.apply(this, [arg].concat(this.extraArgs));
+                console.log("executed case -1");
+                break;
+            case 0:
+                if (arg.length === 0) {
+                    this.func.apply(this, [arg].concat(this.extraArgs));
+                    console.log("executed case 0, empty arg");
+                }
+                else if (argID > -1) {
+                    this.func.apply(this, [arg].concat(this.extraArgs));
+                    console.log("executed case 0, with arg");
+                }
+                else {
+                    sendOutput([new Dialog(`<span class='error'>invalid argument. argument for '${this.cmd}' is optional, but must be one of the following: [${this.validArgs}]</span>`)]);
+                    console.warn("failed to execute case 0");
+                }
+                break;
+            case 1:
+                if (arg.length === 0) {
+                    sendOutput([new Dialog(`<span class='error'>'${this.cmd}' is missing an argument. valid options: [${this.validArgs}]</span>`, 0, 0, false)]);
+                    console.warn("failed to execute case 1, missing arg");
+                }
+                else if (argID === -1) {
+                    sendOutput([new Dialog(`<span class='error'>invalid argument. valid options: [${this.validArgs}]</span></span>`, 0, 0, false)]);
+                    console.warn("failed to execute case 1, bad arg");
+                }
+                else  {
+                    this.func.apply(this, [arg].concat(this.extraArgs));
+                    console.log("executed case 1");
+                }
+                break;
+            case 2:
+                if (arg.length === 0) {
+                    sendOutput([new Dialog(`<span class='error'>'${this.cmd}' is missing an argument. valid options: any</span>`, 0, 0, false)]);
+                    console.warn("failed to execute case 2, missing arg");
+                }
+                else {
+                    this.func.apply(this, [arg].concat(this.extraArgs));
+                    console.log("executed case 2");
+                }
+                break;
         }
     }
 }
@@ -172,19 +190,19 @@ function sendOutput(dialogArr) {
 
 function parseInput(inputStr) {
     let inputs = inputStr.toLowerCase().trim().split(/\s+/);
-    console.log(inputs);
+    // console.log(inputs);
     let cmdID = findWithAttr(commands, "cmd", inputs[0]);
     let gCmdID = findWithAttr(globalCommands, "cmd", inputs[0]);
-    console.log(cmdID);
-    console.log(gCmdID);
+    // console.log(cmdID);
+    // console.log(gCmdID);
     if (cmdID > -1) {
         echoInput(inputs, false);
-        commands[cmdID].execute(inputs.slice(1, inputs.length));
+        commands[cmdID].execute(inputs.slice(1, inputs.length).join());
         // globalCommands = _globalCommands.slice(); // reset any weird changes
     }
     else if (gCmdID > -1) {
         echoInput(inputs, false);
-        globalCommands[gCmdID].execute(inputs.slice(1, inputs.length));
+        globalCommands[gCmdID].execute(inputs.slice(1, inputs.length).join());
     }
     else {
         echoInput(inputs, true);
