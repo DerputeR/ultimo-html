@@ -414,7 +414,7 @@ function story_day2a() {
         new Dialog("you don't hear any birds.", 10, 1000, true),
         new Dialog("", 15, 0, true),
         new Dialog("you think about putting in some <span class='hint'>extra hours</span> today.", 15, 2000, true),
-        new Dialog("you might give your parents a surprise visit", 15, 1000, true)
+        new Dialog("you might give your parents a surprise <span class='hint'>visit</span>", 15, 1000, true)
     ];
     sendOutput(dia);
     commands = [
@@ -444,8 +444,8 @@ function story_day2a_work() {
             new Dialog("you recognize it belonging to your kind elderly supervisor, <span class='hint'>Mr. Brevi</span>", 30, 1000, true)
         ];
         sendOutput(dia);
-        gameTimer = setTimeout(story_day2a_brevi1, 6000);
-    }, 5000);
+        gameTimer = setTimeout(story_day2a_brevi1, 10000);
+    }, 6000);
 }
 
 function story_day2a_brevi1() {
@@ -470,7 +470,7 @@ function story_day2a_brevi1_walk() {
         
     ];
     let dia = [
-        
+        new Dialog("work in progress", 15, 500, true)
     ];
     sendOutput(dia);
 }
@@ -481,7 +481,7 @@ function story_day2a_brevi2() {
         
     ];
     let dia = [
-        
+        new Dialog("work in progress", 15, 500, true)
     ];
     sendOutput(dia);
 }
@@ -489,11 +489,19 @@ function story_day2a_brevi2() {
 function story_day2a_visit() {
     clearOutput(true);
     commands = []
+    let dia = [
+        new Dialog("work in progress", 15, 500, true)
+    ];
+    sendOutput(dia);
 }
 
 function story_day2b() {
     clearOutput(true);
     commands = [];
+    let dia = [
+        new Dialog("work in progress", 15, 500, true)
+    ];
+    sendOutput(dia);
 }
 
 
