@@ -434,7 +434,9 @@ function story_day2a_work() {
     sendOutput(dia);
     setTimeout(() => {
         clearOutput(true);
-        commands = [new commands("Mr. Brevi", story_day2a_brevi1)]
+        commands = [
+            new Command("Mr. Brevi", story_day2a_brevi1)
+        ];
         dia = [
             new Dialog("you arrive at the office.", 15, 500, true),
             new Dialog("there's only one car.", 30, 1000, true),
@@ -449,8 +451,8 @@ function story_day2a_work() {
 function story_day2a_brevi1() {
     clearOutput(true);
     commands = [
-        new commands("Mr. Brevi", story_day2a_brevi2),
-        new commands("walk", story_day2a_brevi1_walk),
+        new Command("Mr. Brevi", story_day2a_brevi2),
+        new Command("walk", story_day2a_brevi1_walk),
     ];
     let dia = [
         new Dialog("you enter the office.", 15, 500, true),
