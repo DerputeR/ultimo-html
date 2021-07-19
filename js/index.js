@@ -1651,8 +1651,9 @@ function story_day3b() {
      let dia = [
          new Dialog("t-00:00:05", 0, 500, true)
      ];
-     sendOutput(dia, true, 10, ()=>{
-         const clockDiv = output.childNodes[0];
+     sendOutput(dia, false);
+     setTimeout(()=>{
+        const clockDiv = output.childNodes[0];
          gameTimer = setInterval(()=>{
              if (second == 0) {
                  clearInterval(gameTimer);
@@ -1667,7 +1668,7 @@ function story_day3b() {
                 clockDiv.innerHTML = clock.join("");
              }
          }, 1000);
-     });
+     }, 500);
  }
 
  function story_day3c() {
