@@ -657,8 +657,7 @@ function story_day1_somethingb() {
     stopGameTimer();
     clearOutput(true);
     const dia = [
-        new Dialog("", 10, 500, true),
-        new Dialog("you clock out and headed home", 10, 1000, true),
+        new Dialog("you clock out and headed home", 10, 500, true),
         new Dialog(" ", 10, 2000, true),
         new Dialog("the streets are eerily quiet", 10, 0, true),
         new Dialog("", 100, 2000, true),
@@ -1151,7 +1150,7 @@ function story_day2b_walk() {
             new Dialog("you check the time and notice it is 1pm.", 25, 500, true),
             new Dialog("the time flew by, didn't it?", 25, 1000, true),
             new Dialog("", 25, 1000, true),
-            new Dialog("you could go out for <span class='cmd'>lunch</span>, but you consider getting a <span class='cmd'>head start</span> on next week's work since you're already here.", 25, 1000, true),
+            new Dialog("you could go out for <span class='cmd'>lunch</span>, \nbut you consider getting a <span class='cmd'>head start</span> on next week's work since you're already here.", 25, 1000, true),
         ];
         sendOutput(dia, true, 10000, story_day2b_walk_headstart); // 10 seconds until defaulting
    }); // 10 seconds until defaulting
@@ -1226,7 +1225,7 @@ function story_day2b_walk_headstart_investigate() {
         ];
         dia = [
             new Dialog("you dial 911.", 15, 500, true),
-            new Dialog("the operator doesn't respond", 15, 1000, true),
+            new Dialog("the operator doesn't respond.", 15, 1000, true),
             new Dialog("", 25, 500, true),
             new Dialog("you <span class='cmd'>try again</span>.", 15, 500, true),
             new Dialog("still nothing.", 25, 300, true),
@@ -1668,7 +1667,7 @@ function story_day3b() {
         new Dialog("you look at your clock but it's off.", 60, 1500, true),
         new Dialog("the power's out.", 60, 1000, true),
         new Dialog("", 60, 1500, true),
-        new Dialog("your <span class='cmd'>phone</cmd> is next to your clock.", 60, 1500, true),
+        new Dialog("your <span class='cmd'>phone</span> is next to your clock.", 60, 1500, true),
     ];
     sendOutput(dia, true, 8000, story_day3c_roll); // 8 seconds until defaulting
  }
@@ -1697,7 +1696,7 @@ function story_day3b() {
     let dia = [
         new Dialog("you slowly roll out of bed and head to the kitchen.", 60, 500, true),
         new Dialog("", 60, 1500, true),
-        new Dialog("you <span class='cmd'>feel terrible</cmd>", 100, 1500, true),
+        new Dialog("you <span class='cmd'>feel terrible</span>", 100, 1500, true),
     ];
     sendOutput(dia, true, 5000, story_day3c_roll_terrible); // 5 seconds until defaulting
  }
@@ -1713,7 +1712,7 @@ function story_day3b() {
     let dia = [
         new Dialog("you start shaking again.", 60, 500, true),
         new Dialog("", 60, 1500, true),
-        new Dialog("you <span class='cmd'>reach</cmd> for your <span class='cmd'>anxiety medication</cmd>", 60, 1500, true),
+        new Dialog("you <span class='cmd'>reach</span> for your <span class='cmd'>anxiety medication</span>", 60, 1500, true),
     ];
     sendOutput(dia, true, 5000, story_day3c_pill1); // 5 seconds until defaulting
  }
@@ -1737,7 +1736,7 @@ function story_day3b() {
         new Dialog("all the people you didn't get to reach out to.", 60, 1000, true),
         new Dialog("all the relationships you failed to keep.", 60, 500, true),
         new Dialog("", 60, 1500, true),
-        new Dialog("you <span class='cmd'>feel guilty</cmd>", 80, 1500, true),
+        new Dialog("you <span class='cmd'>feel guilty</span>", 80, 1500, true),
     ];
     sendOutput(dia, true, 5000, story_day3c_pill2); // 5 seconds until defaulting
  }
@@ -1756,9 +1755,9 @@ function story_day3b() {
     let dia = [
         new Dialog("you swallow <span class='cmd'>another pill</span>.", 60, 500, true),
         new Dialog("", 60, 1500, true),
-        new Dialog("you think about your parents and how long it's been since you last saw them.", 60, 500, true),
+        new Dialog("you think about your parents and \nhow long it's been since you last saw them.", 60, 500, true),
         new Dialog("", 60, 1500, true),
-        new Dialog("you <span class='cmd'>feel horrible</cmd> for not visiting them", 80, 1500, true),
+        new Dialog("you <span class='cmd'>feel horrible</span> for not visiting them", 80, 1500, true),
     ];
     sendOutput(dia, true, 5000, story_day3c_pill3); // 4 seconds until defaulting
  }
