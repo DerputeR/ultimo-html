@@ -1330,8 +1330,8 @@ function story_day3_conn() {
    clearOutput(true);
    commands = [];
    let dia = [
-       new Dialog("you make it home at 3pm", 25, 500, true),
-       new Dialog("you vomit into your toilet", 25, 1500, true),
+       new Dialog("you make it home at 3pm.", 25, 500, true),
+       new Dialog("you vomit into your toilet.", 25, 1500, true),
        new Dialog("", 25, 1000, true),
        new Dialog("you can't think.", 80, 500, true),
        new Dialog("", 25, 1000, true),
@@ -1424,62 +1424,49 @@ function story_day3a() {
                     clearOutput(true);
                     commands = [];
                     dia = [
-                        new Dialog("...", 1000, 500, true),
-                        new Dialog("...", 1000, 500, true),
-                        new Dialog("...", 1000, 500, true),
-                        new Dialog("there's no signal.", 25, 1000, true),
-                        new Dialog("you didn't even get to their voicemail.", 25, 1000, true),
-                        new Dialog("you hope they're doing alright.", 25, 1000, true),
+                        new Dialog("you eat your cereal dry this morning and treat yourself to the fruit basket.", 25, 1000, true),
+                        new Dialog("", 10, 1000, true),
+                        new Dialog("you don't trust how long the milk's gone unrefrigerated.", 25, 1000, true),
                     ];
                     sendOutput(dia, true, 3000, ()=>{
                         stopGameTimer();
                         clearOutput(true);
                         commands = [];
                         dia = [
-                            new Dialog("you eat your cereal dry this morning and treat yourself to the fruit basket.", 25, 1000, true),
+                            new Dialog("you try to boot up your laptop but remember that you were supposed to charge it yesterday but forgot.", 25, 1000, true),
                             new Dialog("", 10, 1000, true),
-                            new Dialog("you don't trust how long the milk's gone unrefrigerated.", 25, 1000, true),
+                            new Dialog("you take out your phone instead to pass the time.", 25, 1000, true),
                         ];
                         sendOutput(dia, true, 3000, ()=>{
-                            stopGameTimer();
-                            clearOutput(true);
+                            inputEnabled = false; // duct tape fix to prevent access to debug screen mid-countdown
                             commands = [];
-                            dia = [
-                                new Dialog("you try to boot up your laptop but remember that you were supposed to charge it yesterday but forgot.", 25, 1000, true),
-                                new Dialog("", 10, 1000, true),
-                                new Dialog("you take out your phone instead to pass the time.", 25, 1000, true),
-                            ];
-                            sendOutput(dia, true, 3000, ()=>{
-                                inputEnabled = false; // duct tape fix to prevent access to debug screen mid-countdown
-                                commands = [];
-                                let clock = ["t-10:00:00", "t-09:00:59", "t-09:00:58", "t-09:00:57", ""]
-                                let i = 0;
-                                const inter = setInterval(()=>{
+                            let clock = ["t-10:00:00", "t-09:00:59", "t-09:00:58", "t-09:00:57", ""]
+                            let i = 0;
+                            const inter = setInterval(()=>{
+                                clearOutput(true);
+                                startGameTimer(4000, () => {inputEnabled = true;});
+                                sendOutput([new Dialog(clock[i], 0, 0, true)]);
+                                ++i;
+                                if (i >= clock.length) {
                                     clearOutput(true);
-                                    startGameTimer(4000, () => {inputEnabled = true;});
-                                    sendOutput([new Dialog(clock[i], 0, 0, true)]);
-                                    ++i;
-                                    if (i >= clock.length) {
-                                        clearOutput(true);
-                                        clearInterval(inter);
-                                        inputEnabled = true;
-                                        stopGameTimer();
-                                        commands = [
-                                            new Command("hours", story_day3a_hours, [], -2),
-                                            new Command("drowsy", story_day3a_drowsy, [], -2),
-                                            new Command("sleep", story_day3a_drowsy, [], -2),
-                                        ];
-                                        dia = [
-                                            new Dialog("you got bored of Angry Birds and Geometry Dash after a few hours.", 25, 500, true),
-                                            new Dialog("", 25, 1000, true),
-                                            new Dialog("you still have a few <span class='cmd'>hours</span> of battery left, but you're feeling a bit <span class='cmd'>drowsy</span>.", 25, 500, true),
-                                            new Dialog("it is still dark out, after all.", 50, 1500, true),
-                                            new Dialog("somehow.", 50, 1500, true),
-                                        ];
-                                        sendOutput(dia, true, 3000, ()=>{});
-                                    }
-                                }, 1000);
-                            }); // 3 seconds until defaulting
+                                    clearInterval(inter);
+                                    inputEnabled = true;
+                                    stopGameTimer();
+                                    commands = [
+                                        new Command("hours", story_day3a_hours, [], -2),
+                                        new Command("drowsy", story_day3a_drowsy, [], -2),
+                                        new Command("sleep", story_day3a_drowsy, [], -2),
+                                    ];
+                                    dia = [
+                                        new Dialog("you got bored of Angry Birds and Geometry Dash after a few hours.", 25, 500, true),
+                                        new Dialog("", 25, 1000, true),
+                                        new Dialog("you still have a few <span class='cmd'>hours</span> of battery left, but you're feeling a bit <span class='cmd'>drowsy</span>.", 25, 500, true),
+                                        new Dialog("it is still dark out, after all.", 50, 1500, true),
+                                        new Dialog("somehow.", 50, 1500, true),
+                                    ];
+                                    sendOutput(dia, true, 3000, story_day3a_drowsy);
+                                }
+                            }, 1000);
                         }); // 3 seconds until defaulting
                     }); // 3 seconds until defaulting
                 }); // 3 seconds until defaulting
@@ -1525,7 +1512,9 @@ function story_day3a_ending() {
    ];
    sendOutput(dia, true, 3000, ()=>{
        clearOutput(true);
-       setTimeout(story_end, 1000);
+       setTimeout(()=>{
+            story_end(1);
+       }, 1000);
     }); // 3 seconds until defaulting
 }
 
@@ -1644,8 +1633,6 @@ function story_day3b() {
     clearOutput(true);
     inputEnabled = false; // duct tape fix to prevent access to debug screen mid-countdown
     let clock = ["t-", "00", ":", "00", ":", "05"];
-    let hour = 0;
-    let minute = 0;
     let second = 5;
     commands = [];
      let dia = [
@@ -1657,7 +1644,7 @@ function story_day3b() {
          gameTimer = setInterval(()=>{
              if (second == 0) {
                  clearInterval(gameTimer);
-                 story_end();
+                 story_end(2);
              }
              else {
                 --second;
@@ -1675,27 +1662,433 @@ function story_day3b() {
     stopGameTimer();
     clearOutput(true);
     commands = [
-        
+        new Command("phone", story_day3c_phone, [], -2),
+        new Command("take", story_day3c_phone, ["phone"], 1),
     ];
     let dia = [
-        new Dialog("work in progress", 25, 500, true)
+        new Dialog("you wake up with a splitting headache.", 60, 500, true),
+        new Dialog("it's still dark out.", 60, 1500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("you look at your clock but it's off.", 60, 1500, true),
+        new Dialog("the power's out.", 60, 1000, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("your <span class='cmd'>phone</cmd> is next to your clock.", 60, 1500, true),
     ];
-    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
+    sendOutput(dia, true, 8000, story_day3c_roll); // 8 seconds until defaulting
+ }
+
+ function story_day3c_phone() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [];
+    let dia = [
+        new Dialog("you check your phone and jolt when you see that it reads:", 60, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("11:30 am", 70, 1500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("a bead of sweat rolls down your face.", 80, 1000, true),
+    ];
+    sendOutput(dia, true, 5000, story_day3c_roll); // 5 seconds until defaulting
+ }
+
+ function story_day3c_roll() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [
+        new Command("feel", story_day3c_roll_terrible, ["terrible"], 1),
+        new Command("terrible", story_day3c_roll_terrible, [""], -2),
+    ];
+    let dia = [
+        new Dialog("you slowly roll out of bed and head to the kitchen.", 60, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("you <span class='cmd'>feel terrible</cmd>", 100, 1500, true),
+    ];
+    sendOutput(dia, true, 5000, story_day3c_roll_terrible); // 5 seconds until defaulting
+ }
+
+ function story_day3c_roll_terrible() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [
+        new Command("reach", story_day3c_pill1, ["medication", "pills"], 0),
+        new Command("anxiety", story_day3c_pill1, ["medication", "pills"], 0),
+        new Command("medication", story_day3c_pill1, [], -2),
+    ];
+    let dia = [
+        new Dialog("you start shaking again.", 60, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("you <span class='cmd'>reach</cmd> for your <span class='cmd'>anxiety medication</cmd>", 60, 1500, true),
+    ];
+    sendOutput(dia, true, 5000, story_day3c_pill1); // 5 seconds until defaulting
+ }
+
+ function story_day3c_pill1() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [
+        new Command("feel", story_day3c_pill1_guilt, ["guilt", "guilty"], 1),
+        new Command("guilty", story_day3c_pill1_guilt, -2),
+        new Command("pill", story_day3c_pill2, [], -2),
+        new Command("take", story_day3c_pill2, ["another", "pill"], 1),
+        new Command("swallow", story_day3c_pill2, ["another", "pill"], 1),
+        new Command("another", story_day3c_pill2, ["pill"], 1),
+    ];
+    let dia = [
+        new Dialog("you swallow a <span class='cmd'>pill</span>.", 60, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("you think about all the things you didn't get done.", 60, 500, true),
+        new Dialog("all the things you didn't get to do.", 60, 1000, true),
+        new Dialog("all the people you didn't get to reach out to.", 60, 1000, true),
+        new Dialog("all the relationships you failed to keep.", 60, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("you <span class='cmd'>feel guilty</cmd>", 80, 1500, true),
+    ];
+    sendOutput(dia, true, 5000, story_day3c_pill2); // 5 seconds until defaulting
+ }
+
+ function story_day3c_pill2() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [
+        new Command("feel", story_day3c_pill3, ["horrible"], 1),
+        new Command("horrible", story_day3c_pill3, -2),
+        new Command("pill", story_day3c_pill3, [], -2),
+        new Command("take", story_day3c_pill3, ["another", "pill"], 1),
+        new Command("swallow", story_day3c_pill3, ["another", "pill"], 1),
+        new Command("another", story_day3c_pill3, ["pill"], 1),
+    ];
+    let dia = [
+        new Dialog("you swallow <span class='cmd'>another pill</span>.", 60, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("you think about your parents and how long it's been since you last saw them.", 60, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("you <span class='cmd'>feel horrible</cmd> for not visiting them", 80, 1500, true),
+    ];
+    sendOutput(dia, true, 5000, story_day3c_pill3); // 4 seconds until defaulting
+ }
+
+ function story_day3c_pill3() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [
+        new Command("pill", story_day3c_pill3_ending, [], -2),
+        new Command("take", story_day3c_pill3_ending, ["another", "pill"], 1),
+        new Command("swallow", story_day3c_pill3_ending, ["another", "pill"], 1),
+        new Command("another", story_day3c_pill3_ending, ["pill"], 1),
+    ];
+    let dia = [
+        new Dialog("you swallow <span class='cmd'>another pill</span>.", 80, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("you feel like a failure.", 80, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("you failed your friends", 80, 1000, true),
+        new Dialog("you failed your family", 80, 1000, true),
+        new Dialog("you failed your dreams", 80, 1000, true),
+        new Dialog("", 60, 1000, true),
+        new Dialog("", 60, 1000, true),
+        new Dialog("your head starts to spin.", 100, 1000, true),
+    ];
+    sendOutput(dia, true, 3000, story_day3c_pill3_ending); // 3 seconds until defaulting
+ }
+
+ function story_day3c_pill3_ending() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [];
+    let dia = [
+        new Dialog("you lose consciousness.", 100, 3000, true),
+    ];
+    sendOutput(dia, true, 5000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        setTimeout(()=>{
+            story_end(3);
+        }, 5000);
+    }); // 5 seconds until defaulting
+ }
+
+ function story_day3c_pill1_guilt() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [];
+    let dia = [
+        new Dialog("you walk back to your room in a daze.", 60, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("you think about your parents and how long it's been since you last saw them.", 60, 500, true),
+        new Dialog("", 60, 1500, true),
+        new Dialog("is this a nightmare?", 60, 1500, true),
+    ];
+    sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [];
+        dia = [
+            new Dialog("you pick up the hunting rifle your dad gave you so many birthdays ago.", 60, 500, true),
+            new Dialog("", 60, 1500, true),
+            new Dialog("you feel like everything you did was for nothing.", 60, 500, true),
+            new Dialog("where did you end up in life?", 60, 1500, true),
+            new Dialog("you're a failure", 60, 1500, true),
+        ];
+        sendOutput(dia, true, 3000, ()=>{
+            stopGameTimer();
+            clearOutput(true);
+            commands = [];
+            dia = [
+                new Dialog("you step out back on the porch and glance at the sky.", 40, 500, true),
+                new Dialog("all of your hopes and dreams, gone.", 40, 1500, true),
+                new Dialog("all of your time, utterly wasted.", 40, 1000, true),
+                new Dialog("", 60, 1500, true),
+                new Dialog("you're a failure.", 15, 1000, true),
+                new Dialog("you're a failure.", 15, 1000, true),
+                new Dialog("you're a failure.", 15, 1000, true),
+                new Dialog("you're a failure.", 15, 1000, true),
+            ];
+            sendOutput(dia, true, 3000, ()=>{
+                stopGameTimer();
+                clearOutput(true);
+                commands = [
+                    new Command("stare", story_day3c_pill1_guilt_stare, [], -2),
+                    new Command("rifle", story_day3c_pill1_guilt_rifle, [], -2),
+                    new Command("load", story_day3c_pill1_guilt_rifle, ["rifle"], 1),
+                ];
+                dia = [
+                    new Dialog("you sit on the bench.", 30, 500, true),
+                    new Dialog("you <span class='cmd'>stare</span> off toward the blood moon", 30, 1500, true),
+                    new Dialog("as it visibly draws closer to the earth", 30, 0, true),
+                    new Dialog("your ear drums rattle.", 30, 1000, true),
+                    new Dialog("", 60, 1500, true),
+                    new Dialog("you put the <span class='cmd'>rifle</span> on your lap", 30, 1000, true),
+                ];
+                sendOutput(dia, true, 4000, ()=>{
+                    story_day3c_pill1_guilt_stare();
+                }); // 4 seconds until defaulting
+            }); // 3 seconds until defaulting
+        }); // 3 seconds until defaulting
+    }); // 3 seconds until defaulting
+ }
+
+ function story_day3c_pill1_guilt_stare() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [];
+    let dia = [
+        new Dialog("you're paralyzed.", 20, 500, true),
+        new Dialog("the light burns brighter.", 20, 1000, true),
+        new Dialog("the very earth is roaring.", 20, 500, true),
+        new Dialog("", 20, 1500, true),
+        new Dialog("your skin is melting.", 80, 500, true),
+    ];
+    sendOutput(dia, true, 3000, story_day3c_pill1_paralyzed_ending); // 5 seconds until defaulting
+ }
+
+function story_day3c_pill1_guilt_rifle() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [
+       new Command("lift", story_day3c_pill1_guilt_rifle_lift, ["rifle"], 1),
+       new Command("rifle", story_day3c_pill1_guilt_rifle_lift, [], -2),
+   ];
+   let dia = [
+        new Dialog("you shakily chamber a round.", 80, 500, true),
+        new Dialog("", 20, 1000, true),
+        new Dialog("the heat is growing unbearable.", 20, 1000, true),
+        new Dialog("", 20, 1000, true),
+        new Dialog("the earth is ablaze.", 20, 1000, true),
+        new Dialog("", 20, 1000, true),
+        new Dialog("you lift up the rifle", 80, 1000, true),
+   ];
+   sendOutput(dia, true, 3000, story_day3c_pill1_paralyzed_ending); // 3 seconds until defaulting
+}
+
+function story_day3c_pill1_guilt_rifle_lift() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+    new Dialog("...", 1000, 500, true),
+    new Dialog("...", 1000, 500, true),
+    new Dialog("even in your final moments,", 50, 3000, true),
+    new Dialog("you can't bring yourself to do it.", 50, 0, true),
+    new Dialog("", 20, 1000, true),
+    new Dialog("even in your final moments,", 70, 1000, true),
+    new Dialog("", 20, 0, true),
+    new Dialog("", 20, 1000, true),
+    new Dialog("you're a coward.", 100, 1000, true),
+   ];
+   sendOutput(dia, true, 3000, story_day3c_pill1_paralyzed_ending); // 10 seconds until defaulting
+}
+
+ function story_day3c_pill1_paralyzed_ending() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [];
+    let dia = [
+        new Dialog("you can't help but scream.", 100, 3000, true)
+    ];
+    sendOutput(dia, true, 10000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        setTimeout(()=>{
+            story_end(4);
+        }, 5000);
+    }); // 10 seconds until defaulting
  }
 
  function story_day3d() {
     stopGameTimer();
     clearOutput(true);
+    let checkedLivingRoom = false;
+    let checkedBedroom = false;
+    let checkedKitchen = false;
+
     commands = [
-        
+        new Command("living", ()=>{
+            if (checkedLivingRoom) {
+                sendOutput([new Dialog("you already looked in the living room", 25, 0, false)], false);
+            }
+            else {
+                stopGameTimer();
+                checkedLivingRoom = true;
+                let livDia = [
+                    new Dialog("you see a note on the coffee table:", 25, 0, true),
+                    new Dialog("\"come outside when you're ready. bring a bottle if you'd like.\"", 25, 500, true),
+                ];
+                const timeLeft = (checkedBedroom && checkedKitchen && checkedLivingRoom) ? 3000 : 10000;
+                sendOutput(livDia, true, timeLeft, () => {
+                    story_day3d_outside(checkedKitchen)
+                });
+            }
+        }, ["room"], 1),
+        new Command("bedroom", ()=>{
+            if (checkedLivingRoom) {
+                sendOutput([new Dialog("you know they're outside.", 25, 0, false)], false);
+            }
+            else if (checkedBedroom) {
+                sendOutput([new Dialog("you already looked in their bedroom", 25, 0, false)], false);
+            }
+            else {
+                stopGameTimer();
+                checkedBedroom = true;
+                let bedDia = [
+                    new Dialog("you don't see any sign of them in their bedroom.", 25, 0, true),
+                ];
+                const timeLeft = (checkedBedroom && checkedKitchen && checkedLivingRoom) ? 3000 : 10000;
+                sendOutput(bedDia, true, timeLeft, () => {
+                    story_day3d_outside(checkedKitchen)
+                });
+            }
+        }, [], -2),
+        new Command("kitchen", ()=>{
+            if (checkedKitchen) {
+                sendOutput([new Dialog("you already looked in the kitchen", 25, 500, false)], false);
+            }
+            else {
+                stopGameTimer();
+                checkedKitchen = true;
+                let kitDia = [
+                    new Dialog("you notice the liquor cabinet is open.", 25, 500, true),
+                    new Dialog("you grab a bottle from the cabinet.", 25, 500, true),
+                ];
+                const timeLeft = (checkedBedroom && checkedKitchen && checkedLivingRoom) ? 3000 : 10000;
+                sendOutput(kitDia, true, timeLeft, () => {
+                    story_day3d_outside(checkedKitchen)
+                });
+            }
+        }, [], -2),
     ];
     let dia = [
-        new Dialog("work in progress", 25, 500, true)
+        new Dialog("you wake up to find your parents missing.", 25, 500, true),
+        new Dialog("", 25, 500, true),
+        new Dialog("you don't see them in the <span class='cmd'>living room</span>, and they aren't in their <span class='cmd'>bedroom</span>.", 25, 500, true),
+        new Dialog("the <span class='cmd'>kitchen</span> sounds empty.", 25, 500, true),
     ];
-    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
+    sendOutput(dia, true, 10000, story_day3d_outside); // 10 seconds until defaulting
  }
 
- function story_end() {
+ function story_day3d_outside(hasLiquor=false) {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [];
+    let dia = [
+        new Dialog("you step outside and see your parents \nsoftly chatting on the bench.", 25, 500, true),
+        new Dialog("", 25, 1000, true),
+    ];
+    if (hasLiquor) {
+        dia = dia.concat([
+            new Dialog("you join them and pass the bottle after a long swig.", 25, 500, true),
+        ]);
+    }
+    else {
+        dia = dia.concat([
+            new Dialog("you join them.", 25, 500, true),
+            new Dialog("", 25, 0, true),
+            new Dialog("you notice an empty bottle on the ground.", 25, 1000, true),
+        ]);
+    }
+    sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [];
+        dia = [
+            new Dialog("you start to reminisce about your childhood.", 25, 500, true),
+            new Dialog("how lucky you were to have the parents you have \neven as you graduated and entered adulthood alone and afraid.", 25, 1000, true),
+            new Dialog("", 25, 0, true),
+            new Dialog("how lucky you are to have their presence now.", 25, 1000, true),
+        ];
+        sendOutput(dia, true, 3000, ()=>{
+            stopGameTimer();
+            clearOutput(true);
+            commands = [];
+            dia = [
+                new Dialog("even now, as the blood moon \nfalls from the sky and lights the world aflame,", 25, 500, true),
+                new Dialog("you don't mind.", 25, 1000, true),
+                new Dialog("", 25, 0, true),
+                new Dialog("all those things you didn't get to do,", 25, 1000, true),
+                new Dialog("all those relationships that didn't work out...", 25, 1000, true),
+                new Dialog("", 25, 1000, true),
+                new Dialog("they don't bother you anymore.", 25, 1000, true),
+            ];
+            sendOutput(dia, true, 5000, ()=>{
+                stopGameTimer();
+                clearOutput(true);
+                commands = [];
+                dia = [
+                    new Dialog("you have them.", 50, 500, true),
+                    new Dialog("", 25, 1000, true),
+                    new Dialog("they have you.", 60, 500, true),
+                    new Dialog("", 25, 1000, true),
+                    new Dialog("", 25, 1000, true),
+                    new Dialog("you're at peace.", 70, 1000, true),
+                ];
+                sendOutput(dia, true, 5000, ()=>{
+                    story_day3d_ending()
+                }); // 10 seconds until defaulting
+            }); // 10 seconds until defaulting
+        }); // 10 seconds until defaulting
+    }); // 10 seconds until defaulting
+ }
+
+ function story_day3d_ending() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [];
+    let dia = [
+        new Dialog("...", 1000, 500, true)
+    ];
+    sendOutput(dia, true, 3000, ()=>{
+        clearOutput(true);
+        setTimeout(()=>{
+                story_end(5);
+        }, 3000);
+    }); // 3 seconds until defaulting
+ }
+
+ /**
+  * Final game scene
+  * @param {int} ending     See endings array for list of possible endings
+  */
+ function story_end(ending=0) {
+    const endingIndex = Math.min(Math.max(Math.floor(ending), 0), endings.length - 1);
     stopGameTimer();
     clearOutput(true);
     inputEnabled = false; // duct tape fix to prevent access to debug screen mid-countdown
@@ -1719,7 +2112,13 @@ function story_day3b() {
              new Dialog("", 25, 0, true),
              new Dialog("created by donald nelson", 0, 0, true),
              new Dialog("", 0, 0, true),
-             new Dialog("type <span class='cmd'>restart</span> and hit enter", 25, 3000, true),
+             new Dialog("", 0, 0, true),
+             new Dialog(`<span class='hint'>ending ${endingIndex}/${endings.length - 1}: ${endings[endingIndex]}</span>`, 100, 2000, true),
+             new Dialog("", 0, 0, true),
+             new Dialog("", 0, 0, true),
+             new Dialog("", 0, 0, true),
+             new Dialog("", 0, 0, true),
+             new Dialog("type <span class='cmd'>restart</span> and hit enter", 50, 2000, true),
          ];
          sendOutput(dia, false);
          gameTimer = setInterval(()=>{
@@ -1745,6 +2144,15 @@ function story_day3b() {
      });
  }
 
+const endings = [
+    "dust",         // dev debug, not a real ending
+    "ignorance",    // default ending
+    "despair",      // crying with family
+    "overdose",     // too many pills
+    "inferno",      // not enough pills
+    "acceptance",   // reflecting with family
+]
+
 const gameScenes = [
     start, 
     story_day1,
@@ -1759,8 +2167,12 @@ const gameScenes = [
     story_day3,
     story_day3a, story_day3a_hours, story_day3a_drowsy, story_day3a_ending,
     story_day3b, story_day3b_ending,
-    story_day3c,
-    story_day3d,
+    story_day3c, story_day3c_phone, story_day3c_roll, story_day3c_roll_terrible, story_day3c_pill1,
+    story_day3c_pill2, story_day3c_pill3, story_day3c_pill3_ending,
+    story_day3c_pill1_guilt, story_day3c_pill1_guilt_stare,
+    story_day3c_pill1_guilt_rifle, story_day3c_pill1_guilt_rifle_lift,
+    story_day3c_pill1_paralyzed_ending,
+    story_day3d, story_day3d_outside, story_day3d_ending,
     story_end
 ];
 
