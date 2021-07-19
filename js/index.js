@@ -885,9 +885,7 @@ function story_day2a_brevi2() {
                             new Dialog("", 15, 2000, true),
                             new Dialog("the clock reads 12:00pm.", 15, 1000, true),
                         ];
-                        sendOutput(dia, true, 5000, ()=>{
-                            story_day2a_go_home();
-                        }); // 5 seconds until defaulting
+                        sendOutput(dia, true, 5000, story_day2a_go_home); // 5 seconds until defaulting
                     }); // 3 seconds until defaulting
                 }); // 3 seconds until defaulting
             }); // 3 seconds until defaulting
@@ -947,9 +945,7 @@ function story_day2a_brevi1_walk_brevi() {
                     new Dialog("his hands are shaking.", 50, 1000, true),
                     new Dialog("his eyes are sheening.", 50, 1000, true),
                 ];
-                sendOutput(dia, true, 5000, ()=>{
-                    story_day2a_go_home();
-                }); // 5 seconds until defaulting
+                sendOutput(dia, true, 5000, story_day2a_go_home); // 5 seconds until defaulting
             }); // 3 seconds until defaulting
         }); // 3 seconds until defaulting
     }); // 3 seconds until defaulting
@@ -1021,7 +1017,7 @@ function story_day2b() {
     let dia = [
         new Dialog("you wake up a bit late this morning.", 25, 500, true),
         new Dialog("it seems a bit overcast today.", 25, 1000, true),
-        new Dialog("you don't hear a ny birds.", 25, 1000, true),
+        new Dialog("you don't hear any birds.", 25, 1000, true),
         new Dialog("", 25, 1000, true),
         new Dialog("you need to finish up on some work from yesterday.", 25, 1000, true),
     ];
@@ -1042,9 +1038,9 @@ function story_day2b() {
             ];
             dia = [
                 new Dialog("you arrive at work.", 25, 500, true),
-                new Dialog("as you <span class='cmd'>walk</span> down the hall to your cubicle, you notice that the <span class='cmd'>TV</span> in the lobby is on.", 25, 1000, true),
+                new Dialog("as you <span class='cmd'>walk</span> down the hall to your cubicle, \nyou notice that the <span class='cmd'>TV</span> in the lobby is on.", 25, 1000, true),
             ];
-            sendOutput(dia, true, 10000, ()=>{story_day2b_walk}); // 10 seconds until defaulting
+            sendOutput(dia, true, 10000, story_day2b_walk); // 10 seconds until defaulting
         }); // 5 seconds until defaulting
     }); // 3 seconds until defaulting
 }
@@ -1157,7 +1153,7 @@ function story_day2b_walk() {
             new Dialog("", 25, 1000, true),
             new Dialog("you could go out for <span class='cmd'>lunch</span>, but you consider getting a <span class='cmd'>head start</span> on next week's work since you're already here.", 25, 1000, true),
         ];
-        sendOutput(dia, true, 10000, ()=>{story_day2b_walk_headstart}); // 10 seconds until defaulting
+        sendOutput(dia, true, 10000, story_day2b_walk_headstart); // 10 seconds until defaulting
    }); // 10 seconds until defaulting
 }
 
@@ -1178,7 +1174,7 @@ function story_day2b_walk_headstart() {
        new Dialog("", 25, 1000, true),
        new Dialog("nah. <span class='cmd'>don't bother</span>. not you're problem.", 25, 1000, true),
    ];
-   sendOutput(dia, true, 5000, ()=>{story_day2b_walk_headstart_dont}); // 10 seconds until defaulting
+   sendOutput(dia, true, 5000, story_day2b_walk_headstart_dont); // 10 seconds until defaulting
 }
 
 function story_day2b_walk_headstart_dont() {
