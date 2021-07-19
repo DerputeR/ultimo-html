@@ -18,8 +18,54 @@
 	"Span": {
 		"prefix" : "span",
 		"body" : [
-			"<span class='${1:hint}'>$2</span>"
+			"<span class='${1:cmd}'>$2</span>"
 		],
 		"description": "Span snippet"
-	}
+	},
+	"Story template": {
+		"prefix": "tstory",
+		"body": [
+			"function ${1:template_story}() {",
+			"   stopGameTimer();",
+			"   clearOutput(true);",
+			"   commands = [",
+			"       ",	
+			"   ];",
+			"   let dia = [",
+			"       new Dialog(\"work in progress\", 25, 500, true)",
+			"   ];",
+			"   sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting",
+			"}"
+		]
+	},
+    "Timer template": {
+        "prefix": "ttimer",
+        "body": [
+            "function ${1:template_story_start}(path) {",
+            "   stopGameTimer();",
+            "   clearOutput(true);",
+            "   inputEnabled = false; // duct tape fix to prevent access to debug screen mid-countdown",
+            "   commands = [];",
+            "   let clock = [\"t-48:00:00\", \"t-47:00:59\", \"t-47:00:58\", \"t-47:00:57\", \"\"]",
+            "   let i = 0;",
+            "   const inter = setInterval(()=>{",
+            "       clearOutput(true);",
+            "       startGameTimer(4000, () => {inputEnabled = true;});",
+            "       sendOutput([new Dialog(clock[i], 0, 0, true)]);",
+            "       ++i;",
+            "       if (i >= clock.length) {",
+            "           clearOutput(true);",
+            "           clearInterval(inter);",
+            "           inputEnabled = true;",
+            "           if (path==\"a\") {",
+            "               setTimeout(, 1000);",
+            "           }",
+            "           else {",
+            "               setTimeout(, 1000);",
+            "           }",
+            "       }",
+            "   }, 1000);",
+            "}"
+        ]
+    }
 }

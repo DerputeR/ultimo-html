@@ -23,7 +23,7 @@ function startGameTimer(timeAmt=10000, func=undefined) {
         gameTimerTime = timeAmt;
         gameTimer = setInterval(()=>{
             if (!gameTimerPaused) {
-                gameTimerTime -= 250;
+                gameTimerTime -= 1000;
                 if (gameTimerTime <= 0) {
                     stopGameTimer();
                     if (func != undefined) {
@@ -34,7 +34,7 @@ function startGameTimer(timeAmt=10000, func=undefined) {
                     updateGameTimerDiv();
                 }
             }
-        }, 250);
+        }, 1000);
         gameTimerActive = true;
         gameTimerPaused = false;
     }
@@ -269,6 +269,7 @@ function clearOutput(clearpersistent=false) {
             output.appendChild(element);
         });
     }
+    inputEnabled = true;
 }
 
 function persistOutput() {
@@ -313,22 +314,23 @@ function sendOutput(dialogArr, triggerGameTimer=false, timer=10000, timerFunc=un
 
 function parseInput(inputStr) {
     let inputs = inputStr.toLowerCase().trim().split(/\s+/);
+    let rawInputs = inputStr.trim().split(/\s+/);
     // console.log(inputs);
     let cmdID = findWithAttr(commands, "cmd", inputs[0]);
     let gCmdID = findWithAttr(globalCommands, "cmd", inputs[0]);
     // console.log(cmdID);
     // console.log(gCmdID);
     if (cmdID > -1) {
-        echoInput(inputs, false);
+        echoInput(rawInputs, false);
         commands[cmdID].execute(inputs.slice(1, inputs.length).join());
         // globalCommands = _globalCommands.slice(); // reset any weird changes
     }
     else if (gCmdID > -1) {
-        echoInput(inputs, false);
+        echoInput(rawInputs, false);
         globalCommands[gCmdID].execute(inputs.slice(1, inputs.length).join());
     }
     else {
-        echoInput(inputs, true);
+        echoInput(rawInputs, true);
     }
 }
 
@@ -516,8 +518,6 @@ function debug(...args) {
     }    
 }
 
-
-
 function help(loop=false) {
     // persistOutput();
     const dialog_help = [
@@ -607,7 +607,7 @@ function story_day1_a() {
     stopGameTimer();
     clearOutput(true);
     const dia = [
-        new Dialog("you've got a busy day today", 15, 500, true),
+        new Dialog("you've had a busy day today", 15, 500, true),
         new Dialog("you arrived early at the office", 15, 1000, true),
         new Dialog("you've been hearing <span class='cmd'>murmurs</span>", 15, 1500, true),
         new Dialog("you're not sure what they're saying", 15, 1500, true),
@@ -618,7 +618,7 @@ function story_day1_a() {
         new Command("murmurs", story_day1_murmurs),
         new Command("work", story_day1_work),
     ];
-    sendOutput(dia, true, 20000, story_day1_work); // 20 seconds to choose your path
+    sendOutput(dia, true, 15000, story_day1_work); // 15 seconds to choose your path
 }
 
 function story_day1_murmurs() {
@@ -636,7 +636,7 @@ function story_day1_murmurs() {
         new Command("something", story_day1_something),
         new Command("work", story_day1_work),
     ];
-    sendOutput(dia, true, 15000, story_day1_work); // 15 seconds to choose your path
+    sendOutput(dia, true, 10000, story_day1_work); // 10 seconds to choose your path
 }
 
 function story_day1_something() {
@@ -681,9 +681,8 @@ function story_day1_work() {
         new Dialog("", 100, 2000, true),
         new Dialog("the moon looks big tonight", 10, 0, true)
     ];
-    sendOutput(dia);
     commands = [];
-    sendOutput(dia, true, 15000, () => {
+    sendOutput(dia, true, 5000, () => {
         story_day2("a");
     }); // 5 seconds before next day
 }
@@ -726,7 +725,7 @@ function story_day2a() {
         new Dialog("you might give your parents a surprise <span class='cmd'>visit</span>", 15, 1000, true)
     ];
     commands = [
-        new Command("extra hours", story_day2a_work),
+        new Command("extra", story_day2a_work, ["hours"], 1),
         new Command("visit", story_day2a_visit)
     ];
     sendOutput(dia, true, 15000, story_day2a_work); // 15 seconds to choose path
@@ -740,10 +739,11 @@ function story_day2a_work() {
         new Dialog("you drive to work.", 15, 500, true),
         new Dialog("the streets are strangely empty.", 30, 2000, true),
     ];
-    sendOutput(dia, true, 10000, ()=>{
+    sendOutput(dia, true, 5000, ()=>{
         clearOutput(true);
         commands = [
-            new Command("Mr. Brevi", story_day2a_brevi1)
+            new Command("Brevi", story_day2a_brevi1),
+            new Command("Mr.", story_day2a_brevi1, ["Brevi"], 1)
         ];
         dia = [
             new Dialog("you arrive at the office.", 15, 500, true),
@@ -759,7 +759,8 @@ function story_day2a_brevi1() {
     stopGameTimer();
     clearOutput(true);
     commands = [
-        new Command("Mr. Brevi", story_day2a_brevi2),
+        new Command("Brevi", story_day2a_brevi2),
+        new Command("Mr.", story_day2a_brevi2, ["brevi"], 1),
         new Command("walk", story_day2a_brevi1_walk),
     ];
     let dia = [
@@ -775,24 +776,183 @@ function story_day2a_brevi1_walk() {
     stopGameTimer();
     clearOutput(true);
     commands = [
-        
+        new Command("Brevi", story_day2a_brevi1_walk_brevi),
+        new Command("Mr.", story_day2a_brevi1_walk_brevi, ["brevi"], 1),
+        new Command("home", story_day2a_go_home),
     ];
     let dia = [
-        new Dialog("work in progress", 15, 500, true)
+        new Dialog("you log on to your computer.", 15, 500, true),
+        new Dialog("you get a few extra hours in, checking some items off your list of tasks you were planning for next week.", 15, 1000, true),
+        new Dialog("", 15, 1000, true),
+        new Dialog("the clock says 12:00 pm.", 20, 1000, true),
+        new Dialog("you consider taking a visit to <span class='cmd'>Mr. Brevi</span>'s before heading <span class='cmd'>home</span>", 20, 1000, true)
     ];
-    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
+    sendOutput(dia, true, 10000, story_day2a_go_home); // 10 seconds until defaulting
+}
+
+function story_day2a_go_home() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("you head home.", 15, 500, true),
+       new Dialog("the streets are still empty.", 20, 1000, true),
+       new Dialog("", 15, 1000, true),
+       new Dialog("isn't it rush hour by now?", 30, 1000, true)
+   ];
+   sendOutput(dia, true, 5000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [];
+        dia = [
+            new Dialog("you get home and take the rest of the day off to do some reading.", 15, 500, true),
+            new Dialog("", 15, 1000, true),
+            new Dialog("you'll call your parents tomorrow morning and let them know you're coming to visit.", 15, 1000, true),
+        ];
+        sendOutput(dia, true, 5000, ()=>{
+            story_day3("a");
+        });
+   }); // 5 seconds until defaulting
 }
 
 function story_day2a_brevi2() {
     stopGameTimer();
     clearOutput(true);
-    commands = [
-        
-    ];
+    commands = [];
     let dia = [
-        new Dialog("work in progress", 15, 500, true)
+        new Dialog("\"Morning, Mr. Brevi.\"", 15, 500, true),
+        new Dialog("", 15, 500, true),
+        new Dialog("\"Alex. You shouldn't be here.\"", 60, 500, true),
+        new Dialog("", 15, 500, true),
+        new Dialog("\"Sir?\"", 30, 1500, true),
+        new Dialog("", 15, 500, true),
+        new Dialog("\"You shouldn't be here.\"", 100, 1500, true),
     ];
-    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
+    sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [];
+        dia = [
+            new Dialog("\"I'm afraid I don't quite—\"", 15, 500, true),
+            new Dialog("", 15, 500, true),
+            new Dialog("\"Go home, Alex. Go home.\"", 60, 500, true),
+            new Dialog("", 15, 0, true),
+            new Dialog("...", 100, 1000, true),
+            new Dialog("", 15, 0, true),
+            new Dialog("\"What for, sir?\"", 30, 1000, true),
+        ];
+        sendOutput(dia, true, 3000, ()=>{
+            stopGameTimer();
+            clearOutput(true);
+            commands = [];
+            dia = [
+                new Dialog("\"Go home and see your family.\"", 100, 500, true),
+                new Dialog("", 15, 0, true),
+                new Dialog("...", 100, 1000, true),
+                new Dialog("", 15, 0, true),
+                new Dialog("he doesn't speak another word.", 30, 1000, true),
+            ];
+            sendOutput(dia, true, 3000, ()=>{
+                stopGameTimer();
+                clearOutput(true);
+                commands = [];
+                dia = [
+                    new Dialog("...", 100, 50, true),
+                    new Dialog("", 15, 1000, true),
+                    new Dialog("\"Sir?\"", 60, 1000, true),
+                    new Dialog("", 15, 1500, true),
+                    new Dialog("he doesn't look at you.", 50, 1500, true),
+                    new Dialog("he's holding a photo of his wife who tragically passed away last year from cancer.", 50, 500, true),
+                    new Dialog("", 15, 1000, true),
+                    new Dialog("his hands are shaking.", 50, 1000, true),
+                    new Dialog("his eyes are sheening.", 50, 1000, true),
+                ];
+                sendOutput(dia, true, 3000, ()=>{
+                    stopGameTimer();
+                    clearOutput(true);
+                    commands = [];
+                    dia = [
+                        new Dialog("you think Mr. Brevi is having a breakdown because of his loss.", 50, 500, true),
+                        new Dialog("knowing how recently his wife passed on, you feel pity for the old man.", 50, 500, true),
+                        new Dialog("perhaps the realization finally hit him.", 50, 500, true),
+                    ];
+                    sendOutput(dia, true, 3000, ()=>{
+                        stopGameTimer();
+                        clearOutput(true);
+                        commands = [];
+                        dia = [
+                            new Dialog("you spend a few hours getting a head start on the task list you made for next week.", 30, 500, true),
+                            new Dialog("", 15, 2000, true),
+                            new Dialog("the clock reads 12:00pm.", 15, 1000, true),
+                        ];
+                        sendOutput(dia, true, 5000, ()=>{
+                            story_day2a_go_home();
+                        }); // 5 seconds until defaulting
+                    }); // 3 seconds until defaulting
+                }); // 3 seconds until defaulting
+            }); // 3 seconds until defaulting
+        }); // 3 seconds until defaulting
+    }); // 3 seconds until defaulting
+}
+
+function story_day2a_brevi1_walk_brevi() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [];
+    let dia = [
+        new Dialog("\"Afternoon, Mr. Brevi.\"", 15, 500, true),
+        new Dialog("", 15, 500, true),
+        new Dialog("\"Alex. You shouldn't be here.\"", 60, 500, true),
+        new Dialog("", 15, 500, true),
+        new Dialog("\"Sir?\"", 30, 1500, true),
+        new Dialog("", 15, 500, true),
+        new Dialog("\"You shouldn't be here.\"", 100, 1500, true),
+    ];
+    sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [];
+        dia = [
+            new Dialog("\"I'm afraid I don't quite—\"", 15, 500, true),
+            new Dialog("", 15, 500, true),
+            new Dialog("\"Go home, Alex. Go home.\"", 60, 500, true),
+            new Dialog("", 15, 0, true),
+            new Dialog("...", 100, 1000, true),
+            new Dialog("", 15, 0, true),
+            new Dialog("\"What for, sir?\"", 30, 1000, true),
+        ];
+        sendOutput(dia, true, 3000, ()=>{
+            stopGameTimer();
+            clearOutput(true);
+            commands = [];
+            dia = [
+                new Dialog("\"Go home and see your family.\"", 100, 500, true),
+                new Dialog("", 15, 0, true),
+                new Dialog("...", 100, 1000, true),
+                new Dialog("", 15, 0, true),
+                new Dialog("he doesn't speak another word.", 50, 1000, true),
+            ];
+            sendOutput(dia, true, 3000, ()=>{
+                stopGameTimer();
+                clearOutput(true);
+                commands = [];
+                dia = [
+                    new Dialog("...", 100, 50, true),
+                    new Dialog("", 15, 1000, true),
+                    new Dialog("\"Sir?\"", 60, 1000, true),
+                    new Dialog("", 15, 1500, true),
+                    new Dialog("he doesn't look at you.", 50, 1500, true),
+                    new Dialog("he's holding a photo of his wife who tragically passed away last year from cancer.", 50, 500, true),
+                    new Dialog("", 15, 1000, true),
+                    new Dialog("his hands are shaking.", 50, 1000, true),
+                    new Dialog("his eyes are sheening.", 50, 1000, true),
+                ];
+                sendOutput(dia, true, 5000, ()=>{
+                    story_day2a_go_home();
+                }); // 5 seconds until defaulting
+            }); // 3 seconds until defaulting
+        }); // 3 seconds until defaulting
+    }); // 3 seconds until defaulting
 }
 
 function story_day2a_visit() {
@@ -800,9 +960,58 @@ function story_day2a_visit() {
     clearOutput(true);
     commands = []
     let dia = [
-        new Dialog("work in progress", 15, 500, true)
+        new Dialog("you drive to your parents' house.", 20, 500, true),
+        new Dialog("the interstate is strangely empty.", 20, 1000, true),
+        new Dialog("", 20, 1000, true),
+        new Dialog("it's gonna take a few hours to get there.", 40, 1000, true),
     ];
-    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
+    sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = []
+        dia = [
+            new Dialog("...", 1000, 500, true),
+        ];
+        sendOutput(dia, true, 10, ()=>{
+            stopGameTimer();
+            clearOutput(true);
+            commands = []
+            dia = [
+                new Dialog("you make it to your parents' place just past noon.", 20, 500, true),
+                new Dialog("", 20, 1000, true),
+                new Dialog("it's getting overcast.", 20, 1000, true),
+                new Dialog("", 20, 1000, true),
+                new Dialog("you ring the doorbell.", 40, 1000, true),
+            ];
+            sendOutput(dia, true, 3000, ()=>{
+                stopGameTimer();
+                clearOutput(true);
+                commands = []
+                dia = [
+                    new Dialog("your mother answers the door.", 20, 500, true),
+                    new Dialog("she has a strained look on her face.", 40, 1000, true),
+                    new Dialog("", 20, 1000, true),
+                    new Dialog("you step inside.", 40, 1000, true),
+                    new Dialog("", 20, 1000, true),
+                    new Dialog("neither of you speak a word.", 80, 1000, true),
+                ];
+                sendOutput(dia, true, 3000, ()=>{
+                    stopGameTimer();
+                    clearOutput(true);
+                    commands = []
+                    dia = [
+                        new Dialog("you get settled in for the night.", 20, 500, true),
+                        new Dialog("mom and dad ask how work has been.", 20, 1000, true),
+                        new Dialog("", 20, 1000, true),
+                        new Dialog("you let the odd encounter at the front door slide at dinner.", 40, 1000, true),
+                    ];
+                    sendOutput(dia, true, 5000, ()=>{
+                        story_day3("b");
+                    }); // 5 seconds until defaulting
+                }); // 3 seconds until defaulting
+            }); // 3 seconds until defaulting
+        }); // 0 seconds until defaulting
+    }); // 3 seconds until defaulting
 }
 
 function story_day2b() {
@@ -810,19 +1019,748 @@ function story_day2b() {
     clearOutput(true);
     commands = [];
     let dia = [
-        new Dialog("work in progress", 15, 500, true)
+        new Dialog("you wake up a bit late this morning.", 25, 500, true),
+        new Dialog("it seems a bit overcast today.", 25, 1000, true),
+        new Dialog("you don't hear a ny birds.", 25, 1000, true),
+        new Dialog("", 25, 1000, true),
+        new Dialog("you need to finish up on some work from yesterday.", 25, 1000, true),
     ];
-    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
+    sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [];
+        dia = [
+            new Dialog("you drive to work.", 25, 500, true),
+            new Dialog("it seems a bit overcast today.", 25, 2000, true),
+        ];
+        sendOutput(dia, true, 5000, ()=>{
+            stopGameTimer();
+            clearOutput(true);
+            commands = [
+                new Command("walk", story_day2b_walk, [], -2),
+                new Command("tv", story_day2b_tv, [], -2)
+            ];
+            dia = [
+                new Dialog("you arrive at work.", 25, 500, true),
+                new Dialog("as you <span class='cmd'>walk</span> down the hall to your cubicle, you notice that the <span class='cmd'>TV</span> in the lobby is on.", 25, 1000, true),
+            ];
+            sendOutput(dia, true, 10000, ()=>{story_day2b_walk}); // 10 seconds until defaulting
+        }); // 5 seconds until defaulting
+    }); // 3 seconds until defaulting
 }
 
+function story_day2b_tv() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("\"...NASA confirms the moon is on a direct collision course with the earth...\"", 40, 500, true),
+       new Dialog("", 80, 1000, true),
+       new Dialog("\"...the administrator reports that the world has less than 36 hours...\"", 60, 500, true),
+       new Dialog("", 80, 1000, true),
+       new Dialog("\"...scientists are working desperately...\"", 80, 500, true),
+   ];
+   sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [];
+        dia = [
+            new Dialog("you saw the moon last night...", 40, 500, true),
+            new Dialog("", 80, 1000, true),
+            new Dialog("you saw the empty traffic...", 40, 500, true),
+            new Dialog("", 80, 1000, true),
+            new Dialog("you heard no birds...", 40, 500, true),
+            new Dialog("", 80, 1000, true),
+            new Dialog("you are shaking.", 80, 500, true),
+        ];
+        sendOutput(dia, true, 3000, ()=>{
+            stopGameTimer();
+            clearOutput(true);
+            commands = [];
+            dia = [
+                new Dialog("you quickly leave the building and get into your vehicle.", 10, 500, true),
+                new Dialog("", 80, 1000, true),
+                new Dialog("you frantically drive 20 mph above the limit", 10, 500, true),
+                new Dialog("", 80, 1000, true),
+                new Dialog("you need to see your parents.", 10, 500, true),
+                new Dialog("", 80, 1000, true),
+                new Dialog("you are shaking.", 10, 500, true),
+            ];
+            sendOutput(dia, true, 3000, ()=>{
+                stopGameTimer();
+                clearOutput(true);
+                commands = [];
+                dia = [
+                    new Dialog("...", 1000, 500, true),
+                ];
+                sendOutput(dia, true, 3000, ()=>{
+                    stopGameTimer();
+                    clearOutput(true);
+                    commands = [];
+                    dia = [
+                        new Dialog("you make it to your parents' house just before noon.", 10, 500, true),
+                        new Dialog("", 80, 1000, true),
+                        new Dialog("you violently ring the doorbell", 10, 500, true),
+                        new Dialog("", 80, 1000, true),
+                        new Dialog("...", 1000, 500, true),
+                    ];
+                    sendOutput(dia, true, 3000, ()=>{
+                        stopGameTimer();
+                        clearOutput(true);
+                        commands = [];
+                        dia = [
+                            new Dialog("your father answers the door.", 10, 500, true),
+                            new Dialog("", 80, 1000, true),
+                            new Dialog("you collapse into his arms and begin to sob silently", 20, 500, true),
+                            new Dialog("", 80, 1000, true),
+                            new Dialog("you remain there for several minutes before heading inside.", 40, 500, true),
+                        ];
+                        sendOutput(dia, true, 3000, ()=>{
+                            stopGameTimer();
+                            clearOutput(true);
+                            commands = [];
+                            dia = [
+                                new Dialog("aside from the sound of you and your parents' breathing, the house is dead silent.", 50, 500, true),
+                                new Dialog("", 80, 1000, true),
+                                new Dialog("even the old grandfather clock has stopped ticking.", 100, 500, true),
+                            ];
+                            sendOutput(dia, true, 5000, ()=>{
+                                story_day3("d");
+                            }); // 3 seconds until defaulting
+                        }); // 3 seconds until defaulting
+                    }); // 3 seconds until defaulting
+                }); // 3 seconds until defaulting
+            }); // 3 seconds until defaulting
+        }); // 3 seconds until defaulting
+   }); // 3 seconds until defaulting
+}
+
+function story_day2b_walk() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("you get seated and finish up on the work you started", 25, 500, true),
+       new Dialog("", 25, 500, true),
+       new Dialog("...", 1000, 500, true),
+   ];
+   sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [
+            new Command("lunch", story_day2b_walk_lunch, [], -2),
+            new Command("head", story_day2b_walk_headstart, ["start"], 1),
+        ];
+        dia = [
+            new Dialog("you check the time and notice it is 1pm.", 25, 500, true),
+            new Dialog("the time flew by, didn't it?", 25, 1000, true),
+            new Dialog("", 25, 1000, true),
+            new Dialog("you could go out for <span class='cmd'>lunch</span>, but you consider getting a <span class='cmd'>head start</span> on next week's work since you're already here.", 25, 1000, true),
+        ];
+        sendOutput(dia, true, 10000, ()=>{story_day2b_walk_headstart}); // 10 seconds until defaulting
+   }); // 10 seconds until defaulting
+}
+
+function story_day2b_walk_headstart() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [
+       new Command("investigate", story_day2b_walk_headstart_investigate, ["noise"], 0),
+       new Command("don't", story_day2b_walk_headstart_dont, ["bother", "investigate"], 0),
+   ];
+   let dia = [
+       new Dialog("you sit down to work", 25, 500, true),
+       new Dialog("", 25, 2000, true),
+       new Dialog("BANG", 0, 1000, true),
+       new Dialog("", 25, 2000, true),
+       new Dialog("whatever that was, it was loud.", 25, 1000, true),
+       new Dialog("perhaps you should <span class='cmd'>investigate</span>?", 25, 1000, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("nah. <span class='cmd'>don't bother</span>. not you're problem.", 25, 1000, true),
+   ];
+   sendOutput(dia, true, 5000, ()=>{story_day2b_walk_headstart_dont}); // 10 seconds until defaulting
+}
+
+function story_day2b_walk_headstart_dont() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("you work for a few more hours before deciding to head home for the night.", 25, 500, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("you decide to treat yourself to a good-old DVD movie night.", 25, 1000, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("classic.", 25, 500, true),
+   ];
+   sendOutput(dia, true, 5000, ()=>{
+       story_day3("a");
+   }); // 5 seconds until defaulting
+}
+
+function story_day2b_walk_headstart_investigate() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("you walk to where the sound came from.", 25, 500, true),
+       new Dialog("it's Mr. Brevi's office.", 25, 1000, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("the light is on, but no one's there.", 25, 1000, true),
+       new Dialog("", 25, 2000, true),
+       new Dialog("then you notice the dead body.", 100, 1000, true),
+   ];
+   sendOutput(dia, true, 1000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [
+            new Command("try", () => {
+                stopGameTimer();
+                clearOutput(true);
+                commands = [];
+                dia = [
+                    new Dialog("you dial 911 a third time.", 15, 500, true),
+                    new Dialog("...", 1000, 1000, true),
+                    new Dialog("dead silence meets you.", 25, 1000, true),
+                    new Dialog("", 15, 1000, true),
+                    new Dialog("you leave before you can vomit.", 25, 2000, true),
+                ];
+                sendOutput(dia, true, 3000, story_day2b_walk_headstart_investigate_leave); // 3 seconds until defaulting
+            }, ["again"], 0),
+            new Command("leave", story_day2b_walk_headstart_investigate_leave, [], -2)
+        ];
+        dia = [
+            new Dialog("you dial 911.", 15, 500, true),
+            new Dialog("the operator doesn't respond", 15, 1000, true),
+            new Dialog("", 25, 500, true),
+            new Dialog("you <span class='cmd'>try again</span>.", 15, 500, true),
+            new Dialog("still nothing.", 25, 300, true),
+            new Dialog("", 25, 300, true),
+            new Dialog("panic begins to build.", 10, 300, true),
+            new Dialog("you need to <span class='cmd'>leave</span>.", 50, 1000, true),
+        ];
+        sendOutput(dia, true, 3000, ()=>{
+            commands[0].execute();
+        }); // 3 seconds until defaulting
+   }); // 1 second until defaulting
+}
+
+function story_day2b_walk_headstart_investigate_leave() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("you quickly leave the building and get into your vehicle.", 25, 500, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("you drive home 10 mph above the limit.", 25, 1000, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("you are haunted by what you saw.", 50, 1000, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("you hardly notice the lack of traffic.", 80, 1000, true),
+   ];
+   sendOutput(dia, true, 3000, story_day3_conn); // 3 seconds until defaulting
+}
+
+function story_day2b_walk_lunch() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("you walk toward the cafeteria just to see if anyone's there.", 25, 500, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("it's empty.", 40, 500, true),
+   ];
+   sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [];
+        dia = [
+            new Dialog("as you exit the building, you hear something from behind you.", 25, 500, true),
+            new Dialog("", 25, 1000, true),
+            new Dialog("it sounds like someone dropped something heavy.", 25, 500, true),
+            new Dialog("", 25, 1000, true),
+            new Dialog("you pay no mind.", 25, 500, true),
+        ];
+        sendOutput(dia, true, 3000, ()=>{
+            stopGameTimer();
+            clearOutput(true);
+            commands = [];
+            dia = [
+                new Dialog("you pull up to your favorite pizza joint but notice the lights are off.", 25, 500, true),
+                new Dialog("", 25, 1000, true),
+                new Dialog("there is a sign on the door.", 25, 500, true),
+                new Dialog("it reads:", 25, 1000, true),
+                new Dialog("", 25, 1000, true),
+                new Dialog("GO HOME. CHERISH YOUR LAST DAYS.", 70, 1000, true),
+            ];
+            sendOutput(dia, true, 3000, ()=>{
+                stopGameTimer();
+                clearOutput(true);
+                commands = [];
+                dia = [
+                    new Dialog("you find yourself confused and somewhat disturbed.", 40, 500, true),
+                    new Dialog("", 25, 1000, true),
+                    new Dialog("you look at the sky and notice that the moon is...", 25, 500, true),
+                    new Dialog("", 25, 1000, true),
+                    new Dialog("huge.", 100, 1000, true),
+                ];
+                sendOutput(dia, true, 3000, ()=>{
+                    stopGameTimer();
+                    clearOutput(true);
+                    commands = [];
+                    dia = [
+                        new Dialog("you swear it wasn't that big last night.", 25, 500, true),
+                        new Dialog("", 25, 500, true),
+                        new Dialog("did you get enough sleep?", 25, 500, true),
+                        new Dialog("where is everyone?", 15, 500, true),
+                        new Dialog("what's going on?", 5, 500, true),
+                        new Dialog("", 25, 2000, true),
+                        new Dialog("you need to get home before you pass out.", 25, 1000, true),
+                    ];
+                    sendOutput(dia, true, 3000, ()=>{
+                        story_day3_conn();
+                    }); // 3 seconds until defaulting
+                }); // 3 seconds until defaulting
+            }); // 3 seconds until defaulting
+        }); // 3 seconds until defaulting
+   }); // 3 seconds until defaulting
+}
+
+function story_day3_conn() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("you make it home at 3pm", 25, 500, true),
+       new Dialog("you vomit into your toilet", 25, 1500, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("you can't think.", 80, 500, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("you collapse on your bed and pass out.", 25, 500, true),
+   ];
+   sendOutput(dia, true, 5000, ()=>{
+       story_day3("c");
+   }); // 10 seconds until defaulting
+}
+
+function story_day3(path) {
+    stopGameTimer();
+    clearOutput(true);
+    inputEnabled = false; // duct tape fix to prevent access to debug screen mid-countdown
+    commands = [];
+    let clock = ["t-24:00:00", "t-23:00:59", "t-23:00:58", "t-23:00:57", ""]
+    let i = 0;
+    const inter = setInterval(()=>{
+        clearOutput(true);
+        startGameTimer(4000, () => {inputEnabled = true;});
+        sendOutput([new Dialog(clock[i], 0, 0, true)]);
+        ++i;
+        if (i >= clock.length) {
+            clearOutput(true);
+            clearInterval(inter);
+            inputEnabled = true;
+            if (path == "a") {
+                setTimeout(story_day3a, 1000);
+            }
+            else if (path == "b") {
+                setTimeout(story_day3b, 1000);
+            }
+            else if (path == "c") {
+                setTimeout(story_day3c, 1000);
+            }
+            else {
+                setTimeout(story_day3d, 1000);
+            }
+        }
+    }, 1000);
+}
+
+function story_day3a() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("you wake up.", 25, 500, true),
+       new Dialog("you look out your window and notice it's still dark.", 25, 1000, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("you turn to flick on the light but it doesn't turn on.", 25, 1000, true),
+       new Dialog("that's odd.", 25, 1000, true),
+       new Dialog("it looks like there's been a blackout.", 25, 1000, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("you grab your phone and turn it on", 25, 500, true),
+   ];
+   sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [];
+        dia = [
+            new Dialog("the clock reads: 10:45am", 25, 500, true),
+            new Dialog("...10:45?", 25, 2000, true),
+            new Dialog("", 25, 1000, true),
+            new Dialog("why's it so dark outside?", 25, 500, true),
+        ];
+        sendOutput(dia, true, 3000, ()=>{
+            stopGameTimer();
+            clearOutput(true);
+            commands = [];
+            dia = [
+                new Dialog("you go to turn on the TV out of habit and remember that the power's out.", 25, 500, true),
+                new Dialog("", 25, 1000, true),
+                new Dialog("you call your parents instead.", 25, 500, true),
+            ];
+            sendOutput(dia, true, 3000, ()=>{
+                stopGameTimer();
+                clearOutput(true);
+                commands = [];
+                dia = [
+                    new Dialog("...", 1000, 500, true),
+                    new Dialog("...", 1000, 500, true),
+                    new Dialog("...", 1000, 500, true),
+                    new Dialog("there's no signal.", 25, 1000, true),
+                    new Dialog("you didn't even get to their voicemail.", 25, 1000, true),
+                    new Dialog("you hope they're doing alright.", 25, 1000, true),
+                ];
+                sendOutput(dia, true, 3000, ()=>{
+                    stopGameTimer();
+                    clearOutput(true);
+                    commands = [];
+                    dia = [
+                        new Dialog("...", 1000, 500, true),
+                        new Dialog("...", 1000, 500, true),
+                        new Dialog("...", 1000, 500, true),
+                        new Dialog("there's no signal.", 25, 1000, true),
+                        new Dialog("you didn't even get to their voicemail.", 25, 1000, true),
+                        new Dialog("you hope they're doing alright.", 25, 1000, true),
+                    ];
+                    sendOutput(dia, true, 3000, ()=>{
+                        stopGameTimer();
+                        clearOutput(true);
+                        commands = [];
+                        dia = [
+                            new Dialog("you eat your cereal dry this morning and treat yourself to the fruit basket.", 25, 1000, true),
+                            new Dialog("", 10, 1000, true),
+                            new Dialog("you don't trust how long the milk's gone unrefrigerated.", 25, 1000, true),
+                        ];
+                        sendOutput(dia, true, 3000, ()=>{
+                            stopGameTimer();
+                            clearOutput(true);
+                            commands = [];
+                            dia = [
+                                new Dialog("you try to boot up your laptop but remember that you were supposed to charge it yesterday but forgot.", 25, 1000, true),
+                                new Dialog("", 10, 1000, true),
+                                new Dialog("you take out your phone instead to pass the time.", 25, 1000, true),
+                            ];
+                            sendOutput(dia, true, 3000, ()=>{
+                                inputEnabled = false; // duct tape fix to prevent access to debug screen mid-countdown
+                                commands = [];
+                                let clock = ["t-10:00:00", "t-09:00:59", "t-09:00:58", "t-09:00:57", ""]
+                                let i = 0;
+                                const inter = setInterval(()=>{
+                                    clearOutput(true);
+                                    startGameTimer(4000, () => {inputEnabled = true;});
+                                    sendOutput([new Dialog(clock[i], 0, 0, true)]);
+                                    ++i;
+                                    if (i >= clock.length) {
+                                        clearOutput(true);
+                                        clearInterval(inter);
+                                        inputEnabled = true;
+                                        stopGameTimer();
+                                        commands = [
+                                            new Command("hours", story_day3a_hours, [], -2),
+                                            new Command("drowsy", story_day3a_drowsy, [], -2),
+                                            new Command("sleep", story_day3a_drowsy, [], -2),
+                                        ];
+                                        dia = [
+                                            new Dialog("you got bored of Angry Birds and Geometry Dash after a few hours.", 25, 500, true),
+                                            new Dialog("", 25, 1000, true),
+                                            new Dialog("you still have a few <span class='cmd'>hours</span> of battery left, but you're feeling a bit <span class='cmd'>drowsy</span>.", 25, 500, true),
+                                            new Dialog("it is still dark out, after all.", 50, 1500, true),
+                                            new Dialog("somehow.", 50, 1500, true),
+                                        ];
+                                        sendOutput(dia, true, 3000, ()=>{});
+                                    }
+                                }, 1000);
+                            }); // 3 seconds until defaulting
+                        }); // 3 seconds until defaulting
+                    }); // 3 seconds until defaulting
+                }); // 3 seconds until defaulting
+            }); // 3 seconds until defaulting
+        }); // 3 seconds until defaulting
+   }); // 3 seconds until defaulting
+}
+
+function story_day3a_hours() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("you lay in bed with your headphones and play a playlist you had saved.", 25, 500, true),
+       new Dialog("", 25, 1000, true),
+       new Dialog("you close your eyes and drift asleep.", 50, 1000, true),
+   ];
+   sendOutput(dia, true, 5000, story_day3a_ending); // 5 seconds until defaulting
+}
+
+function story_day3a_drowsy() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [];
+    let dia = [
+        new Dialog("you decide to head to bed.", 25, 500, true),
+        new Dialog("it's a bit hot.", 25, 1500, true),
+        new Dialog("then again, the AC hasn't been running for a while.", 25, 1500, true),
+        new Dialog("", 25, 1000, true),
+        new Dialog("you take some sleeping medication and lay in bed nearly naked.", 25, 500, true),
+        new Dialog("", 25, 1000, true),
+        new Dialog("you close your eyes and drift asleep.", 50, 1000, true),
+    ];
+    sendOutput(dia, true, 5000, story_day3a_ending); // 5 seconds until defaulting
+}
+
+function story_day3a_ending() {
+   stopGameTimer();
+   clearOutput(true);
+   commands = [];
+   let dia = [
+       new Dialog("...", 1000, 500, true)
+   ];
+   sendOutput(dia, true, 3000, ()=>{
+       clearOutput(true);
+       setTimeout(story_end, 1000);
+    }); // 3 seconds until defaulting
+}
+
+function story_day3b() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [];
+    let dia = [
+        new Dialog("you woke up this morning to find your parents listening to their old radio.", 35, 500, true),
+        new Dialog("", 25, 1000, true),
+        new Dialog("voices pierces through the static...", 45, 500, true),
+    ];
+    sendOutput(dia, true, 3000, ()=>{
+        stopGameTimer();
+        clearOutput(true);
+        commands = [];
+        dia = [
+            new Dialog("\"̴M̶y̵ ̸b̴r̷o̵t̴h̷e̸r̷s̵ ̷a̷n̸d̶ ̸s̴i̶s̴t̶e̸r̵s̸,̷", 35, 500, true),
+            new Dialog("d̸o̸ ̸n̶o̵t̸ ̷b̶e̷ ̴a̶f̶r̴a̸i̸d̴,̷", 35, 1000, true),
+            new Dialog("\̵f̴o̸r̶ ̸t̷h̶i̵s̶ ̸i̷s̷ ̶n̷o̷t̷ ̸t̴h̴e̵ ̴e̴n̸d̴,̷", 35, 1000, true),
+            new Dialog("b̶u̴t̴ ̴a̶ ̸n̶e̷w̶ ̷b̸e̵g̴i̴n̶n̸i̷n̷g̴.̶", 35, 1000, true),
+            new Dialog("", 25, 1000, true),
+            new Dialog("M̸a̷y̷ ̵w̷e̴ ̴m̴e̸e̸t̵ ̶a̶g̸a̶i̴n̸ ̴i̴n̴ ̴p̸a̶r̴a̸d̶i̴s̶e̷.̴\"̷", 45, 500, true),
+        ];
+        sendOutput(dia, true, 3000, ()=>{
+            stopGameTimer();
+            clearOutput(true);
+            commands = [];
+            dia = [
+                new Dialog("\"̷.̸.̴.̴w̶i̵t̷n̵e̸s̶s̶e̶s̸ ̸r̵e̴p̷o̷r̷t̸ ̵t̵h̶o̷u̵s̶a̴n̷d̴s̴ ̶o̴f̵ ̶f̸l̸a̴r̴e̵s̷ ̶b̸u̵r̷n̸i̷n̷g̷ ̶a̵c̵r̶o̷s̷s̴ ̶t̵h̶e̴ ̷s̵k̵y̸.̶.̷.̶\"̸", 15, 500, true),
+                new Dialog("", 15, 0, true),
+                new Dialog("̶\"̵.̷.̷.̷L̶o̶r̵d̵,̶ ̴h̸a̷v̵e̴ ̴m̷e̶r̴c̸y̶ ̶o̴n̵ ̵u̵s̴!̴.̶.̷.̴\"̴", 15, 500, true),
+                new Dialog("", 15, 0, true),
+                new Dialog("̶\"̴.̷.̴.̶w̵e̶ ̵h̶a̶v̷e̷ ̸r̴e̷c̸e̸i̵v̷e̶d̵ ̶r̷e̸p̴o̶r̴t̷s̸ ̵o̷f̸ ̷s̸p̸o̸n̷t̸a̸n̸e̴o̸u̷s̴ ̵e̸a̸r̸t̵h̶q̴u̵a̷k̶e̴s̵ ̸a̴n̶d̶ ̴e̴x̶t̵r̶e̴m̴e̶l̸y̴ ̵l̵o̶u̴d̶ ̴n̴o̷i̶s̴e̷s̷ ̶r̷e̶v̵e̵r̵b̷e̸r̶a̵t̴i̸n̵g̶ ̷i̸n̵ ̷t̴h̷e̵ ̷a̶t̷m̶o̵s̸p̷h̵e̴r̵e̷.̴.̷.̴\"̸", 15, 500, true),
+            ];
+            sendOutput(dia, true, 3000, ()=>{
+                stopGameTimer();
+                clearOutput(true);
+                commands = [];
+                dia = [
+                    new Dialog("\".̶.̶.̸N̷A̵S̶A̵ ̷h̵a̴s̴ ̶b̷e̴e̸n̴ ̷u̸n̴a̶b̶l̷e̶ ̶t̷o̸ ̶f̸i̸n̵d̴ ̸a̶ ̵w̸a̶y̸ ̶t̴o̸ ̴d̸e̵f̵l̶e̶c̷t̶ ̷t̷h̴e̷ ̴t̴r̶a̷j̸e̶c̴t̵o̷r̵y̴ ̶o̴f̸ ̶t̸h̷e̵ ̷m̷o̶o̵n̴.̸.̴.̵\"", 15, 500, true),
+                    new Dialog("", 15, 0, true),
+                    new Dialog(".̷.̵.̸t̸h̶e̸ ̵U̴n̷i̷t̵e̶d̴ ̵N̴a̶t̷i̷o̸n̷s̵ ̵h̷a̶s̸ ̷d̶e̷c̴l̶a̸r̸e̸d̵ ̶a̷ ̷g̵l̴o̴b̴a̴l̴ ̵s̶t̵a̸t̵e̸ ̶o̸f̵ ̶e̴m̵e̸r̸g̶e̷n̴c̶y̶,̸ ̵c̸o̵d̷e̸n̵a̶m̵e̴ ̶'̷J̴u̸d̴g̴e̶m̵e̷n̶t̸ ̷D̸a̷y̸'̴.̴.̵.̵", 15, 500, true),
+                    new Dialog("", 15, 0, true),
+                    new Dialog(".̶.̸.̴d̵o̷z̴e̸n̷s̵ ̷o̷f̵ ̸i̸s̷l̴a̸n̷d̷s̷ ̷a̸n̴d̸ ̸c̸o̵a̵s̶t̴s̴ ̸h̸a̵v̶e̵ ̸b̶e̶e̴n̶ ̷c̶o̸m̵p̷l̵e̷t̶e̴l̸y̷ ̸w̷i̸p̶e̶d̵ ̷o̸u̵t̸ ̶b̵y̶ ̷t̵h̴e̸ ̶a̸m̷p̴l̸i̸f̸i̵e̵d̷ ̴w̴a̶v̵e̴s̴.̵.̶.̸", 15, 500, true),
+                ];
+                sendOutput(dia, true, 3000, ()=>{
+                    stopGameTimer();
+                    clearOutput(true);
+                    commands = [];
+                    dia = [
+                        new Dialog("the power suddenly shuts off.", 35, 500, true),
+                        new Dialog("you notice how dark it is outside.", 35, 1500, true),
+                        new Dialog("", 15, 1000, true),
+                        new Dialog("your bedroom clock said it was 11am when you left the room.", 35, 500, true),
+                        new Dialog("", 15, 1000, true),
+                        new Dialog("you feel moisture down your cheek", 35, 500, true),
+                    ];
+                    sendOutput(dia, true, 3000, ()=>{
+                        stopGameTimer();
+                        clearOutput(true);
+                        commands = [];
+                        dia = [
+                            new Dialog("you realize how badly you were shaking when your father pulls you and your mother into an embrace.", 45, 500, true),
+                            new Dialog("", 15, 2000, true),
+                            new Dialog("you look at the old grandfather clock.", 65, 500, true),
+                            new Dialog("", 15, 1000, true),
+                            new Dialog("it reads: ", 35, 1500, true),
+                            new Dialog("", 15, 1000, true),
+                            new Dialog("8:55pm", 35, 1500, true),
+                        ];
+                        sendOutput(dia, true, 3000, ()=>{
+                            stopGameTimer();
+                            clearOutput(true);
+                            commands = [];
+                            dia = [
+                                new Dialog("...", 1000, 500, true),
+                                new Dialog("you don't dare move from your parents' embrace.", 85, 2000, true),
+                            ];
+                            sendOutput(dia, true, 3000, ()=>{
+                                stopGameTimer();
+                                clearOutput(true);
+                                commands = [];
+                                dia = [
+                                    new Dialog("...", 1000, 500, true),
+                                    new Dialog("a low rumbling is growing.", 35, 2000, true),
+                                    new Dialog("it falls upon deaf ears.", 35, 2000, true),
+                                    new Dialog("...", 1000, 2000, true),
+                                    new Dialog("you can see the red moon swallowing the horizon...", 35, 2000, true),
+                                    new Dialog("it's getting brighter outside...", 85, 2000, true),
+                                ];
+                                sendOutput(dia, true, 3000, ()=>{
+                                    stopGameTimer();
+                                    clearOutput(true);
+                                    commands = [];
+                                    dia = [
+                                        new Dialog("you can't help but", 100, 2500, true),
+                                        new Dialog("shed a", 100, 1, true),
+                                        new Dialog("tear", 100, 1, true),
+                                    ];
+                                    sendOutput(dia, true, 5000, ()=>{
+                                        story_day3b_ending();
+                                    }); // 5 seconds until defaulting
+                                }); // 3 seconds until defaulting
+                            }); // 3 seconds until defaulting
+                        }); // 3 seconds until defaulting
+                    }); // 3 seconds until defaulting
+                }); // 3 seconds until defaulting
+            }); // 3 seconds until defaulting
+        }); // 3 seconds until defaulting
+    }); // 3 seconds until defaulting
+ }
+
+ function story_day3b_ending() {
+    stopGameTimer();
+    clearOutput(true);
+    inputEnabled = false; // duct tape fix to prevent access to debug screen mid-countdown
+    let clock = ["t-", "00", ":", "00", ":", "05"];
+    let hour = 0;
+    let minute = 0;
+    let second = 5;
+    commands = [];
+     let dia = [
+         new Dialog("t-00:00:05", 0, 500, true)
+     ];
+     sendOutput(dia, true, 10, ()=>{
+         const clockDiv = output.childNodes[0];
+         gameTimer = setInterval(()=>{
+             if (second == 0) {
+                 clearInterval(gameTimer);
+                 story_end();
+             }
+             else {
+                --second;
+                clock[5] = second.toLocaleString("en-US", {
+                    minimumIntegerDigits: 2,
+                    useGrouping: false
+                });
+                clockDiv.innerHTML = clock.join("");
+             }
+         }, 1000);
+     });
+ }
+
+ function story_day3c() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [
+        
+    ];
+    let dia = [
+        new Dialog("work in progress", 25, 500, true)
+    ];
+    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
+ }
+
+ function story_day3d() {
+    stopGameTimer();
+    clearOutput(true);
+    commands = [
+        
+    ];
+    let dia = [
+        new Dialog("work in progress", 25, 500, true)
+    ];
+    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
+ }
+
+ function story_end() {
+    stopGameTimer();
+    clearOutput(true);
+    inputEnabled = false; // duct tape fix to prevent access to debug screen mid-countdown
+    let clock = ["t+", "00", ":", "00", ":", "00"];
+    let hour = 0;
+    let minute = 0;
+    let second = 0;
+    commands = [
+        new Command("restart", start, [], -2) 
+     ];
+     let dia = [
+         new Dialog("t-00:00:00", 0, 0, true),
+         new Dialog("", 25, 0, true),
+         new Dialog("", 25, 0, true),
+         new Dialog("", 25, 0, true),
+         new Dialog("ultimo", 0, 3000, true),
+     ];
+     sendOutput(dia, true, 1000, ()=>{
+         const clockDiv = output.childNodes[0];
+         dia = [
+             new Dialog("", 25, 0, true),
+             new Dialog("created by donald nelson", 0, 0, true),
+             new Dialog("", 0, 0, true),
+             new Dialog("type <span class='cmd'>restart</span> and hit enter", 25, 3000, true),
+         ];
+         sendOutput(dia, false);
+         gameTimer = setInterval(()=>{
+             ++second;
+             minute += Math.floor(second/60);
+             second %= 60;
+             hour += Math.floor(minute/60);
+             minute %= 60;
+             clock[1] = hour.toLocaleString("en-US", {
+                 minimumIntegerDigits: 2,
+                 useGrouping: false
+             });
+             clock[3] = minute.toLocaleString("en-US", {
+                 minimumIntegerDigits: 2,
+                 useGrouping: false
+             });
+             clock[5] = second.toLocaleString("en-US", {
+                 minimumIntegerDigits: 2,
+                 useGrouping: false
+             });
+             clockDiv.innerHTML = clock.join("");
+         }, 1000);
+     });
+ }
 
 const gameScenes = [
     start, 
-    story_day1, 
+    story_day1,
     story_day1_a, story_day1_murmurs, story_day1_something, story_day1_somethingb, story_day1_work, 
     story_day2, 
-    story_day2a, story_day2a_brevi1, story_day2a_brevi1_walk, story_day2a_brevi2, story_day2a_visit, 
-    story_day2b
+    story_day2a, story_day2a_work, story_day2a_brevi1, story_day2a_go_home, story_day2a_brevi1_walk, story_day2a_brevi2, story_day2a_brevi1_walk_brevi, story_day2a_visit, 
+    story_day2b,
+    story_day2b_walk, story_day2b_tv, story_day2b_walk_headstart, story_day2b_walk_headstart_dont,
+    story_day2b_walk_headstart_investigate, story_day2b_walk_headstart_investigate_leave,
+    story_day2b_walk_lunch,
+    story_day3_conn,
+    story_day3,
+    story_day3a, story_day3a_hours, story_day3a_drowsy, story_day3a_ending,
+    story_day3b, story_day3b_ending,
+    story_day3c,
+    story_day3d,
+    story_end
 ];
 
 start();
