@@ -33,6 +33,11 @@ div#output{
 
 div#timer {
     /* position: absolute; */
+    height: 1em;
+}
+
+div.hidden {
+    opacity: 0;
 }
 
 div {

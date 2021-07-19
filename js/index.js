@@ -10,17 +10,29 @@ let gameTimerID = -10;
 let gameTimerTime = 0;
 let gameTimerActive = false;
 let gameTimerPaused = false;
+let inputEnabled = false; // Turn off until ready to accept input (failsafe for forceQueue)
 
-function startGameTimer(timeAmt=10000) {
+/**
+ * Game countdown timer
+ * @param {*} timeAmt   Time in milliseconds
+ * @param {*} func      Function to run after countdown reaches 0
+ */
+function startGameTimer(timeAmt=10000, func=undefined) {
     if (!gameTimerActive || gameTimerPaused) {
+        updateGameTimerDiv();
         gameTimerTime = timeAmt;
-        gameTimerID = setInterval(()=>{
-            gameTimerTime -= 250;
-            if (gameTimerTime <= 0) {
-                stopGameTimer();
-            }
-            else {
-                updateGameTimerDiv();
+        gameTimer = setInterval(()=>{
+            if (!gameTimerPaused) {
+                gameTimerTime -= 250;
+                if (gameTimerTime <= 0) {
+                    stopGameTimer();
+                    if (func != undefined) {
+                        func.apply(null);
+                    }
+                }
+                else {
+                    updateGameTimerDiv();
+                }
             }
         }, 250);
         gameTimerActive = true;
@@ -29,12 +41,12 @@ function startGameTimer(timeAmt=10000) {
 }
 
 function stopGameTimer() {
+    timerDiv.removeEventListener("startTimer", handleTimerStartEvent);
+    ++gameTimerID;
     if (gameTimerActive) {
-        clearInterval(gameTimerID);
+        clearInterval(gameTimer);
         gameTimerTime = 0;
         updateGameTimerDiv();
-        const e = new CustomEvent("gameTimerStopped");
-        document.dispatchEvent(e);
         gameTimerActive = false;
         gameTimerPaused = false;
     }
@@ -42,15 +54,15 @@ function stopGameTimer() {
 
 function pauseGameTimer() {
     if (gameTimerActive && !gameTimerPaused) {
-        clearInterval(gameTimerID);
-        updateGameTimerDiv();
+        // clearInterval(gameTimer);
         gameTimerPaused = true;
+        updateGameTimerDiv();
     }
 }
 
 function resumeGameTimer() {
     if (gameTimerActive && gameTimerPaused) {
-        startGameTimer(gameTimerTime);
+        gameTimerPaused = false;
     }
 }
 
@@ -63,12 +75,21 @@ function togglePauseGameTimer() {
     }
 }
 
+function handleTimerStartEvent(e) {
+    console.log("received id: " + e.detail.id);
+    console.log("stored id: " + gameTimerID);
+    // if (gameTimerID <= e.detail.id) {
+    //     startGameTimer(e.detail.time, e.detail.func);
+    // }
+    startGameTimer(e.detail.time, e.detail.func);
+}
+
 function updateGameTimerDiv() {
-    timerDiv.innerHTML = "* ".repeat((gameTimerTime / 1000));
+    timerDiv.innerHTML = "* ".repeat(Math.ceil((gameTimerTime / 1000)));
 }
 
 input.addEventListener("keypress", (e) => {
-    if (e.keyCode == 13 || e.key == "Enter") {
+    if (inputEnabled && (e.keyCode == 13 || e.key == "Enter")) {
         if (input.value.length > 0) {
             parseInput(input.value);
             input.value = "";
@@ -92,7 +113,7 @@ class Dialog {
 class Command {
     /**
      * Creates a command object
-     * @param {String} cmd                  String of the command that will be input. DON'T CAPITALIZE OR INCLUDE EXTRA WHITESPACE
+     * @param {String} cmd                  String of the command that will be input.
      * @param {function} func               Reference to a function that will be called on successful execution of the command
      * @param {String Array} validArgs      List of valid second words that can follow the first command (action) word.
      *                                      If empty, the command does not require a second word as a target.
@@ -105,7 +126,7 @@ class Command {
      * @param {int} ...args                 Optional arguments passed to func. DO NOT PUT INTO AN ARRAY
      */
     constructor(cmd, func, validArgs=[], requireArg=-2, ...args) {
-        this.cmd = cmd;
+        this.cmd = cmd.toLowerCase().trim();
         this.func = func;
         this.validArgs = validArgs;
         this.requireArg = requireArg;
@@ -264,8 +285,14 @@ function persistOutput() {
  * @param {Dialog Array} dialogArr      Array of dialog objects    
  * @param {boolean} triggerGameTimer    Whether or not the end of the queue will trigger the game timer
  * @param {number} timer                Game timer count in milliseconds
+ * @param {function} timerFunc          Function to pass to the game timer when it hits 0
  */
-function sendOutput(dialogArr, triggerGameTimer=false, timer=10000) {
+function sendOutput(dialogArr, triggerGameTimer=false, timer=10000, timerFunc=undefined) {
+    inputEnabled = false; // disable until first output run is given
+    if (triggerGameTimer) {
+        timerDiv.addEventListener("startTimer", handleTimerStartEvent, {once: true});
+    }
+
     if (queue.length > 0) {
         forceOutQueue();
     }
@@ -279,7 +306,7 @@ function sendOutput(dialogArr, triggerGameTimer=false, timer=10000) {
         }
     }
     // typewriters(dialogArr, divs, 0);
-    displayLines(dialogArr, divs, triggerGameTimer, timer);
+    displayLines(dialogArr, divs, triggerGameTimer, timer, timerFunc);
 
     output.scrollTop = output.scrollHeight;
 }
@@ -332,21 +359,22 @@ function forceOutQueue() {
 }
 
 
-function displayLines(diags, divs, triggerGameTimer, timer) {
+function displayLines(diags, divs, triggerGameTimer, timer, timerFunc) {
     queueItem = new QueueItem(diags, divs, []);
     queue.push(queueItem);
-    recursiveLine(diags, divs, 0, 0, queueItem, triggerGameTimer, timer);
+    recursiveLine(diags, divs, 0, 0, queueItem, triggerGameTimer, timer, timerFunc);
 }
 
-function recursiveLine(diags, divs, row, charIndex, queueItem, triggerGameTimer, timer) {
+function recursiveLine(diags, divs, row, charIndex, queueItem, triggerGameTimer, timer, timerFunc) {
     let queuePos = queue.indexOf(queueItem);
-    let p = displayPromise(diags, divs, row, charIndex, queuePos);
+    let p = displayPromise(diags, divs, row, charIndex, queuePos, triggerGameTimer, timer, timerFunc);
     console.log(p);
-    p.then(()=>{
+    p.then((timerId)=>{
         charIndex = 0;
         ++row;
         if (row < diags.length) {
-            recursiveLine(diags, divs, row, charIndex, queueItem, triggerGameTimer, timer);
+            console.log("recursive call");
+            recursiveLine(diags, divs, row, charIndex, queueItem, triggerGameTimer, timer, timerFunc);
         }
         else {
             console.log("finished item");
@@ -354,19 +382,24 @@ function recursiveLine(diags, divs, row, charIndex, queueItem, triggerGameTimer,
             queue.splice(queuePos, 1);
             if (triggerGameTimer) {
                 // TODO: trigger game timer here
-                startGameTimer(timer);
+                // startGameTimer(timer, timerFunc);
+                const e = new CustomEvent("startTimer", {
+                    detail: {
+                        time: timer,
+                        func: timerFunc,
+                        id: timerId
+                    }
+                });
+                timerDiv.dispatchEvent(e);
             }
         }
-    }).catch(()=>{
+        console.log("after recursive call");
+    }).catch((timerId)=>{
         console.log("forcing output");
-        if (triggerGameTimer) {
-            // TODO: trigger game timer here
-            startGameTimer(timer);
-        }
     });
 }
 
-const displayPromise = (diags, divs, row, charIndex, queuePos) => {
+const displayPromise = (diags, divs, row, charIndex, queuePos, triggerGameTimer, timerTime, timerFunc) => {
     return new Promise((resolve, reject) => {
         const str = diags[row].text;
         const timeout = setTimeout(() => {
@@ -379,23 +412,36 @@ const displayPromise = (diags, divs, row, charIndex, queuePos) => {
                     divs[row].innerHTML = str.slice(0, charIndex+1);
                     if (++charIndex >= str.length) {
                         clearInterval(timer);
-                        resolve();
+                        gameTimerID = timeout;
+                        resolve(timeout);
+                        console.log("timerID: " + timeout);
                     }
                 }, diags[row].delay);
                 queue[queuePos]["timerArr"].push(timer);
-                const e = document.createElement("span");
-                e.className = "empty";
-                output.appendChild(e);
-                e.addEventListener("forceOutput", function cancel() {
-                    e.removeEventListener("forceOutput", cancel);
-                    output.removeChild(e);
-                    reject();
-                });
+                output.addEventListener("forceOutput", function cancel(e) {
+                    console.log("force event consumed");
+                    clearInterval(timer);
+                    gameTimerID = timeout;
+                    reject(timeout); // ! sometimes this doesn't get received
+                    console.log("timerID: " + timeout);
+                    if (triggerGameTimer) {
+                        // TODO: trigger game timer here
+                        const ev = new CustomEvent("startTimer", {
+                            detail: {
+                                time: timerTime,
+                                func: timerFunc,
+                                id: timeout
+                            }
+                        });
+                        timerDiv.dispatchEvent(ev);
+                    }
+                }, {once: true});
             }
             else {
                 divs[row].innerHTML = str;
-                resolve();
+                resolve(timeout);
             }
+            inputEnabled = true; // reenable input - safe to accept input
         }, diags[row].interval);
         queue[queuePos]["timerArr"].push(timeout);
     });
@@ -449,16 +495,21 @@ function debug(...args) {
     stopGameTimer();
     clearOutput(true);
     try {
-        const index = parseInt(args[0]);
-        gameScenes[index].apply(null);
+        const index = findWithAttr(gameScenes, "name", args[0]);
+        if (index > -1) {
+            gameScenes[index].apply(null);    
+        }
+        else {
+            gameScenes[parseInt(args[0])].apply(null);
+        }
     }
     catch {
         let sceneList = [];
-        gameScenes.forEach((func)=>{
-            sceneList.push(func.name);
-        });
+        for (let i = 0; i < gameScenes.length; i++) {
+            sceneList.push(`${i} : ${gameScenes[i].name}`);
+        }
         const debugDiag = [
-            new Dialog("To jump to a scene, type 'debug' followed by the name from this list:", 0, 0, true),
+            new Dialog("To jump to a scene, type 'debug' followed by the ID or name from this list:", 0, 0, true),
             new Dialog(sceneList.join("\n"), 0, 0, true)
         ];
         sendOutput(debugDiag);
@@ -498,7 +549,7 @@ function restart(last_scene) {
     const prompt = [
         new Command("Y", ()=>{start()}),
         new Command("N", ()=>{
-            clearOutput();
+            clearOutput(false);
             globalCommands = _globalCommands;
         })
     ];
@@ -507,6 +558,7 @@ function restart(last_scene) {
 }
 
 function start() {
+    stopGameTimer();
     clearOutput(true);
     const dialog_start = [
         new Dialog("ultimo", 100, 1000, true),
@@ -531,23 +583,28 @@ function start() {
 }
 
 function story_day1() {
+    stopGameTimer();
     clearOutput(true);
+    inputEnabled = false; // duct tape bugfix to stop access to debug screen while countdown is going
     commands = [];
     let clock = ["t-72:00:00", "t-71:00:59", "t-71:00:58", "t-71:00:57", ""]
     let i = 0;
     const inter = setInterval(()=>{
+        startGameTimer(4000, ()=>{inputEnabled = true});
         clearOutput(true);
         sendOutput([new Dialog(clock[i], 0, 0, true)]);
         ++i;
         if (i >= clock.length) {
             clearOutput(true);
             clearInterval(inter);
+            inputEnabled = true;
             setTimeout(story_day1_a, 1000);
         }
     }, 1000);
 }
 
 function story_day1_a() {
+    stopGameTimer();
     clearOutput(true);
     const dia = [
         new Dialog("you've got a busy day today", 15, 500, true),
@@ -557,16 +614,15 @@ function story_day1_a() {
         new Dialog("", 100, 1000, true),
         new Dialog("you've got <span class='cmd'>work</span> to do before going home tonight", 15, 1000, true)
     ];
-    sendOutput(dia);
     commands = [
         new Command("murmurs", story_day1_murmurs),
         new Command("work", story_day1_work),
     ];
-
-    gameTimer = setTimeout(story_day1_work, 30000); // 30 seconds before you go default path
+    sendOutput(dia, true, 20000, story_day1_work); // 20 seconds to choose your path
 }
 
 function story_day1_murmurs() {
+    stopGameTimer();
     clearOutput(true);
     const dia = [
         new Dialog("you overhear them saying <span class='cmd'>something</span> about the moon", 15, 500, true),
@@ -576,16 +632,15 @@ function story_day1_murmurs() {
         new Dialog("", 100, 1000, true),
         new Dialog("you've got some <span class='cmd'>work</span> to finish", 15, 0, true)
     ];
-    sendOutput(dia);
     commands = [
         new Command("something", story_day1_something),
         new Command("work", story_day1_work),
     ];
-
-    gameTimer = setTimeout(story_day1_work, 30000); // 30 seconds before you go default path
+    sendOutput(dia, true, 15000, story_day1_work); // 15 seconds to choose your path
 }
 
 function story_day1_something() {
+    stopGameTimer();
     clearOutput(true);
     const dia = [
         new Dialog("\"I'm sure NASA and SpaceX and all them will figure somethin' out.\"", 15, 500, true),
@@ -594,12 +649,12 @@ function story_day1_something() {
         new Dialog("you look at the time and see it's 6pm", 15, 0, true),
         new Dialog("you'll have to finish your work tomorrow.", 15, 1000, true)
     ];
-    sendOutput(dia);
     commands = [];
-    gameTimer = setTimeout(story_day1_somethingb, 12000);
+    sendOutput(dia, true, 5000, story_day1_somethingb); // 5 seconds before next day
 }
 
 function story_day1_somethingb() {
+    stopGameTimer();
     clearOutput(true);
     const dia = [
         new Dialog("", 10, 500, true),
@@ -609,14 +664,14 @@ function story_day1_somethingb() {
         new Dialog("", 100, 2000, true),
         new Dialog("the moon looks big tonight", 10, 0, true)
     ];
-    sendOutput(dia);
     commands = [];
-    setTimeout(() => {
+    sendOutput(dia, true, 5000, () => {
         story_day2("b");
-    }, 12000);
+    }); // 5 seconds before next day
 }
 
 function story_day1_work() {
+    stopGameTimer();
     clearOutput(true);
     const dia = [
         new Dialog("you turn in your last assignment", 10, 500, true),
@@ -628,23 +683,27 @@ function story_day1_work() {
     ];
     sendOutput(dia);
     commands = [];
-    setTimeout(() => {
+    sendOutput(dia, true, 15000, () => {
         story_day2("a");
-    }, 12000);
+    }); // 5 seconds before next day
 }
 
 function story_day2(path) {
+    stopGameTimer();
     clearOutput(true);
+    inputEnabled = false; // duct tape fix to prevent access to debug screen mid-countdown
     commands = [];
     let clock = ["t-48:00:00", "t-47:00:59", "t-47:00:58", "t-47:00:57", ""]
     let i = 0;
     const inter = setInterval(()=>{
         clearOutput(true);
+        startGameTimer(4000, () => {inputEnabled = true;});
         sendOutput([new Dialog(clock[i], 0, 0, true)]);
         ++i;
         if (i >= clock.length) {
             clearOutput(true);
             clearInterval(inter);
+            inputEnabled = true;
             if (path=="a") {
                 setTimeout(story_day2a, 1000);
             }
@@ -656,6 +715,7 @@ function story_day2(path) {
 }
 
 function story_day2a() {
+    stopGameTimer();
     clearOutput(true);
     const dia = [
         new Dialog("you wake up a little late this morning.", 15, 500, true),
@@ -665,23 +725,22 @@ function story_day2a() {
         new Dialog("you think about putting in some <span class='cmd'>extra hours</span> today.", 15, 2000, true),
         new Dialog("you might give your parents a surprise <span class='cmd'>visit</span>", 15, 1000, true)
     ];
-    sendOutput(dia);
     commands = [
         new Command("extra hours", story_day2a_work),
         new Command("visit", story_day2a_visit)
     ];
-    gameTimer = setTimeout(story_day2a_work, 30000); // 30 seconds before you go default path
+    sendOutput(dia, true, 15000, story_day2a_work); // 15 seconds to choose path
 }
 
 function story_day2a_work() {
+    stopGameTimer();
     clearOutput(true);
     commands = []
     let dia = [
         new Dialog("you drive to work.", 15, 500, true),
         new Dialog("the streets are strangely empty.", 30, 2000, true),
     ];
-    sendOutput(dia);
-    setTimeout(() => {
+    sendOutput(dia, true, 10000, ()=>{
         clearOutput(true);
         commands = [
             new Command("Mr. Brevi", story_day2a_brevi1)
@@ -692,12 +751,12 @@ function story_day2a_work() {
             new Dialog("", 30, 0, true),
             new Dialog("you recognize it belonging to your kind elderly supervisor, <span class='cmd'>Mr. Brevi</span>", 30, 1000, true)
         ];
-        sendOutput(dia);
-        gameTimer = setTimeout(story_day2a_brevi1, 10000);
-    }, 6000);
+        sendOutput(dia, true, 5000, story_day2a_brevi1); // 5 seconds before defaulting
+    });
 }
 
 function story_day2a_brevi1() {
+    stopGameTimer();
     clearOutput(true);
     commands = [
         new Command("Mr. Brevi", story_day2a_brevi2),
@@ -709,11 +768,11 @@ function story_day2a_brevi1() {
         new Dialog("", 0, 1000, true),
         new Dialog("you <span class='cmd'>walk</span> toward your cubicle", 15, 1000, true)
     ];
-    sendOutput(dia);
-    gameTimer = setTimeout(story_day2a_brevi1_walk, 30000);
+    sendOutput(dia, true, 10000, story_day2a_brevi1_walk); // 10 seconds until defaulting
 }
 
 function story_day2a_brevi1_walk() {
+    stopGameTimer();
     clearOutput(true);
     commands = [
         
@@ -721,10 +780,11 @@ function story_day2a_brevi1_walk() {
     let dia = [
         new Dialog("work in progress", 15, 500, true)
     ];
-    sendOutput(dia);
+    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
 }
 
 function story_day2a_brevi2() {
+    stopGameTimer();
     clearOutput(true);
     commands = [
         
@@ -732,35 +792,37 @@ function story_day2a_brevi2() {
     let dia = [
         new Dialog("work in progress", 15, 500, true)
     ];
-    sendOutput(dia);
+    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
 }
 
 function story_day2a_visit() {
+    stopGameTimer();
     clearOutput(true);
     commands = []
     let dia = [
         new Dialog("work in progress", 15, 500, true)
     ];
-    sendOutput(dia);
+    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
 }
 
 function story_day2b() {
+    stopGameTimer();
     clearOutput(true);
     commands = [];
     let dia = [
         new Dialog("work in progress", 15, 500, true)
     ];
-    sendOutput(dia);
+    sendOutput(dia, true, 10000, ()=>{}); // 10 seconds until defaulting
 }
 
 
-const gameScenes = 
-[
+const gameScenes = [
     start, 
-    story_day1, story_day1_a, story_day1_murmurs, story_day1_something, story_day1_somethingb, story_day1_work, 
+    story_day1, 
+    story_day1_a, story_day1_murmurs, story_day1_something, story_day1_somethingb, story_day1_work, 
     story_day2, 
     story_day2a, story_day2a_brevi1, story_day2a_brevi1_walk, story_day2a_brevi2, story_day2a_visit, 
     story_day2b
-]
+];
 
 start();
