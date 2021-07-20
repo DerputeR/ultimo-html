@@ -1,7 +1,7 @@
 const output = document.querySelector("#output");
 const input = document.querySelector("#cmd");
 const timerDiv = document.querySelector("#timer");
-const version = "v0.9a";
+const version = "v0.9b";
 let queue = [];
 let commands = [];
 let persistentDivs = [];
@@ -1520,7 +1520,7 @@ function story_day3b() {
     let dia = [
         new Dialog("you woke up this morning to find your parents listening to their old radio.", 35, 500, true),
         new Dialog("", 25, 1000, true),
-        new Dialog("voices pierces through the static...", 45, 500, true),
+        new Dialog("voices pierce through the static...", 45, 500, true),
     ];
     sendOutput(dia, true, 3000, ()=>{
         stopGameTimer();
@@ -1631,7 +1631,7 @@ function story_day3b() {
     let second = 5;
     commands = [];
      let dia = [
-         new Dialog("t-00:00:05", 0, 500, true)
+         new Dialog("t-00:00:05", 0, 1000, true)
      ];
      sendOutput(dia, false);
      setTimeout(()=>{
