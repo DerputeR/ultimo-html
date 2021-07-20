@@ -1650,7 +1650,7 @@ function story_day3b() {
                 clockDiv.innerHTML = clock.join("");
              }
          }, 1000);
-     }, 500);
+     }, 1000);
  }
 
  function story_day3c() {
