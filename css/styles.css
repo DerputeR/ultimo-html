@@ -89,7 +89,8 @@ span.hint {
 span.cmd {
     font-weight: bold;
     font-style: normal;
-    color: magenta;
+    /* color: magenta; */
+    color: yellow;
 }
 
 /* err {
